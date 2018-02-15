@@ -32,7 +32,8 @@ tire_chance     = .001  # chance of popping a tire during the sim (same for all 
 dead_end_chance = .005  # chance of hitting a dead end during the sim (same for all vehicle types)
 flood_chance    = .0025 # chance of hitting a flooded roadway during the sim (same for all vehicle types)
 
-print ""
+print ""  # in the gui, any print statements should be converted to status messages
+	  # (for example, text would go in the blank white box at the bottom of chase_main_screen.py)
 
 if os.path.exists(fname) == True:
     # Open the team's unique data file, restore their data if program closed
