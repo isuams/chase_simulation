@@ -27,7 +27,7 @@ from ChaseLib.Warning import process_warning_text
 
 
 # Critical Files/Directories
-lsr_db_file = "warning.db"
+warn_db_file = "warning.db"
 master_file = "master.json"
 warning_dir = "/home/jthielen/WWW/chase/warnings/"
 
@@ -35,7 +35,7 @@ warning_dir = "/home/jthielen/WWW/chase/warnings/"
 min_sleep = 10
 
 # Establish DB connection
-warn_con = sql.connect(lsr_db_file)
+warn_con = sql.connect(warn_db_file)
 warn_cur = warn_con.cursor()
 
 # Get the master settings
@@ -75,11 +75,12 @@ if settings['simulation_running']:
 
 		if len(warnings_to_release) > 0:
 
+			print('Processing {} warning(s) for {}...'.format(len(warnings_to_release), cur_now.strftime(std_fmt)))
+
 			# Loop over the warnings
 			for warning_row in warnings_to_release:
 
 				# Release the warning!
-				print('Processing {} warning(s) for {}...'.format(len(warnings_to_release), cur_now.strftime(std_fmt)))
 
 				# First, process the text
 				warning = warning_row[1]
@@ -94,14 +95,14 @@ if settings['simulation_running']:
 				warn_cur.execute('UPDATE warnings_raw SET processed = 1 WHERE text = ?', [warning_row[1]])
 				warn_con.commit()
 
-				print('\tWarnings processed.')
+			print('\tWarnings processed.')
 
 		else:
 			print('No warnings to release for {}.'.format(cur_now.strftime(std_fmt)))
 
 
 		# Find the next warning to release
-		warn_cur.execute('SELECT * FROM warnings_raw WHERE processed = 0 ORDER BY valid DESC LIMIT 1')
+		warn_cur.execute('SELECT * FROM warnings_raw WHERE processed = 0 ORDER BY valid ASC LIMIT 1')
 		warnings_in_waiting = warn_cur.fetchall()
 
 

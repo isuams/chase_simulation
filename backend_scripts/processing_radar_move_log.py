@@ -46,7 +46,7 @@ from ChaseLib.Timing import std_fmt
 arc_start_time = datetime(2010, 6, 1, 0, 0, 0, tzinfo=pytz.UTC)
 arc_end_time = datetime(2010, 6, 1, 6, 0, 0, tzinfo=pytz.UTC)
 
-# Assets
+# Critical Directories
 radar_raw_dir = '/chinook2/jthielen/chase_2018/HAS011062487/'
 radar_staging_dir = '/chinook2/jthielen/chase_2018/radar/'
 

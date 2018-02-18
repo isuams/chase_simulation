@@ -104,5 +104,5 @@ def process_warning_text(warning, timings):
 	        warning = warning[0:(match.start()+offset)] + replacement + warning[(match.end()+offset):]
 	        offset += text_growth
 
-	    # All done with the processing! Return the processed text and the valid cur time
-	    return warning, cur_time_from_arc(warning_arc_time)
+    # All done with the processing! Return the processed text and the valid cur time
+    return warning, cur_time_from_arc(warning_arc_time)
