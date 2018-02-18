@@ -47,10 +47,6 @@ lsr_asset_url = 'http://www.meteor.iastate.edu/~tuftedal/chase/LSR/'
 # Get the master settings
 with open(master_file) as master_data:
 	settings = json.load(master_data)
-arc_start_time = parser.parse(settings['arc_start_time'])
-arc_end_time = parser.parse(settings['arc_end_time'])
-cur_start_time = parser.parse(settings['cur_start_time'])
-speed_factor = settings['speed_factor']
 
 # Open database
 lsr_con = sql.connect(lsr_db_file)

@@ -63,7 +63,7 @@ print('Creating local database...')
 
 warn_con = sql.connect("warning.db")
 warn_cur = warn_con.cursor()
-warn_cur.execute("CREATE TABLE warnings_raw (valid datetime, text char)")
+warn_cur.execute("CREATE TABLE warnings_raw (valid datetime, text char, processed tinyint)")
 warn_con.commit()
 
 # Save the data
