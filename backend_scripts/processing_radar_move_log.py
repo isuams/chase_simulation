@@ -38,6 +38,7 @@ import glob, os, pytz, time
 from sqlite3 import dbapi2 as sql
 from datetime import datetime, timedelta
 from dateutil import parser, tz
+from ChaseLib.Timing import std_fmt
 
 # Constants
 
@@ -81,7 +82,7 @@ for i in range(len(glob_list)):
 
 # Move the files
 for scan in scan_list:
-    print('Moving {} {}'.format(scan['site'], scan['datetime'].strftime('%Y-%m-%dT%H:%M:%SZ')))
+    print('Moving {} {}'.format(scan['site'], scan['datetime'].strftime(std_fmt)))
     new_file = radar_staging_dir + scan['file_part'][:-4]
     os.rename(scan['file'], new_file)
     scan['file'] = new_file 
@@ -95,7 +96,7 @@ rad_con.commit()
 
 # Insert all the records
 for scan in scan_list:
-    rad_cur.execute("INSERT INTO scans (time, site, file) VALUES (?,?,?)", [scan['datetime'].strftime('%Y-%m-%dT%H:%M:%SZ'), scan['site'], scan['file']])
+    rad_cur.execute("INSERT INTO scans (time, site, file) VALUES (?,?,?)", [scan['datetime'].strftime(std_fmt), scan['site'], scan['file']])
     
 rad_con.commit()
 

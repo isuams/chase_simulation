@@ -26,6 +26,7 @@ import glob, json, os, pytz, re, requests, textwrap, time
 from sqlite3 import dbapi2 as sql
 from datetime import datetime, timedelta
 from dateutil import parser, tz
+from ChaseLib.Timing import std_fmt
 
 # Constants
 
@@ -73,7 +74,7 @@ for warning in warnings:
 
     # Find the valid time
     match = re.search(r'(?P<timestamp>[0-9]{2}(0[1-9]|1[0-2])([0-2][1-9]|3[0-1])T(([0-1][0-9])|(2[0-3]))([0-5][0-9])Z)', warning)
-    valid = parser.parse(match.group('timestamp'), yearfirst=True).strftime('%Y-%m-%dT%H:%M:%SZ')
+    valid = parser.parse(match.group('timestamp'), yearfirst=True).strftime(std_fmt)
 
     # Save the row
     warn_cur.execute(query, [valid, warning])
