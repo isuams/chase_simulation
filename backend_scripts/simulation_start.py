@@ -21,7 +21,7 @@ prompt to start simulation_radar.py and simulation_warning.py, and exit
 """
 
 # Imports
-import json, pytz
+import json, pytz, shutil
 from datetime import datetime, timedelta
 from dateutil import parser, tz
 from ChaseLib.Timing import std_fmt
@@ -29,6 +29,7 @@ from ChaseLib.Timing import std_fmt
 # Critical Files/Directories
 master_file = "master.json"
 rad_db_file = "radar.db"
+lsr_endpoint_dir = '/home/jthielen/WWW/chase/endpoints/'
 
 # Greetings!
 print('\nISU AMS Chase Simulation\n------------------------\n')
@@ -80,11 +81,13 @@ if confirm[0] in ['Y', 'y']:
 		}
 		json.dump(timings, f)
 
-		print("Simulation timing started.")
-		print("Nothing is actually happening yet...")
-		print("To do that, run simulation_radar.py (radar scans) and simulation_warning.py (warning text).")
-		print("To reset, run simulation_reset.py, and to pause, hack on the master file.")
-		print("\nHave fun!")
+	shutil.copyfile(master_file, lsr_endpoint_dir + master_file)
+	
+	print("Simulation timing started.")
+	print("Nothing is actually happening yet...")
+	print("To do that, run simulation_radar.py (radar scans) and simulation_warning.py (warning text).")
+	print("To reset, run simulation_reset.py, and to pause, hack on the master file.")
+	print("\nHave fun!")
 
 else:
 	print('Canceled...')

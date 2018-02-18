@@ -20,7 +20,7 @@ prompt to start simulation_radar.py and simulation_warning.py, and exit
 """
 
 # Imports
-import json, os, pytz
+import json, os, pytz, shutil
 from datetime import datetime, timedelta
 from dateutil import parser, tz
 from ChaseLib.Timing import std_fmt
@@ -31,6 +31,7 @@ rad_db_file = "radar.db"
 warn_db_file = "warning.db"
 radar_deploy_dir = '/home/jthielen/WWW/chase/l2data/'
 warning_dir = "/home/jthielen/WWW/chase/warnings/"
+lsr_endpoint_dir = '/home/jthielen/WWW/chase/endpoints/'
 
 # Greetings!
 print('\nRESET!\n------\n')
@@ -53,6 +54,8 @@ if confirm[0] in ['Y', 'y']:
 	# Clear master file
 	with open(master_file, 'w') as f:
 		json.dump({}, f)
+
+	shutil.copyfile(master_file, lsr_endpoint_dir + master_file)
 
 	# Clear folders
 	folders = [warning_dir]
