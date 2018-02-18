@@ -13,22 +13,22 @@ import datetime
 # Specify constants that can shouldn't be reset prior to introduction if
 # statements. Other constants are assigned later and may be changed.
 home = os.path.expanduser('~')
-#fname = "%s/teamdat.db" % (home,)
-#teamfile_location = "/home/tuftedal/WWW/chase/loc/"
+fname = "%s/teamdat.db" % (home,)
+teamfile_location = "/home/tuftedal/WWW/chase/loc/"
 
 # For testing on my home computer.
-home_dir = home.replace('\\', '/')
-fname = "%s/Downloads/teamdat.db" % (home_dir,)
-teamfile_location = "%s/Desktop/" % (home_dir,)
+#home_dir = home.replace('\\', '/')
+#fname = "%s/Downloads/teamdat.db" % (home_dir,)
+#teamfile_location = "%s/Desktop/" % (home_dir,)
 
 sim_time        = 95    # in minutes
 speedup         = 3.84  # how much faster the simulation is when compared to realtime (obtained when running radar script)
-slp_time        = 10    # approximate time between radar scans (in real-time seconds)
+slp_time        = 60    # approximate time between radar scans (in real-time seconds)
 spd_limit       = 65    # in mph.
 fill_rate       = 15    # rate at which a fuel pump fills a gas tank (in seconds per gallon)
 stuck_time      = 25    # how long after sim start that people can start getting stuck (in real-time minutes)
 cc_time         = 10    # how long after sim start that people can start experiencing chaser convergence (in real-time minutes)
-sunset_time     = 2    # how long after sim start that the sun sets in the simulation (in real-time minutes); this affects hazard chances
+sunset_time     = 65    # how long after sim start that the sun sets in the simulation (in real-time minutes); this affects hazard chances
 dr_chance       = .1    # chance of driving onto a dirt road
 cc_chance       = .05   # chance of getting stuck in chaser convergence
 tire_chance     = .001  # chance of popping a tire during the sim (same for all vehicle types)
