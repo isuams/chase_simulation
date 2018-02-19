@@ -39,7 +39,7 @@ def cur_time_from_arc(arc_time, timings):
 
 	if type(arc_time) is datetime:
 		return cur_start_time + (arc_time - arc_start_time) / speed_factor
-	elif type(cur_time) is str:
+	elif type(arc_time) is str:
 		return (cur_start_time + (parser.parse(arc_time) - arc_start_time) / speed_factor).strftime(std_fmt)
 	else:
 		raise ValueError('arc_time must be str or datetime.datetime')

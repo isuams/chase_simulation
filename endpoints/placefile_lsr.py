@@ -1,4 +1,4 @@
-#!/usr/local/miniconda3/bin/python
+#!/home/jthielen/miniconda3/envs/chase/bin/python
 
 """
 LSR Placefile Endpoint
@@ -53,7 +53,7 @@ lsr_con = sql.connect(lsr_db_file)
 lsr_cur = lsr_con.cursor()
 
 # Prep the time interval (arc time)
-t1 = arc_time_from_cur(datetime.utcnow(), timings=settings)
+t1 = arc_time_from_cur(datetime.now(tz=pytz.UTC), timings=settings)
 t0 = t1 - timedelta(hours=hours_valid)
 t0, t1 = (t.strftime(std_fmt) for t in [t0, t1])
 

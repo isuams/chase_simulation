@@ -1,4 +1,4 @@
-#!/usr/local/miniconda3/bin/python
+#!/usr/bin/env python
 
 """
 Simulation Control - Start
@@ -38,7 +38,7 @@ print('\nISU AMS Chase Simulation\n------------------------\n')
 arc_start_time = parser.parse(input('When does the archived case start?\n\t(use UTC) : '))
 cur_start_time = input('When does the current simulation of the case start?\n\t(enter now for now) : ')
 if cur_start_time[0] in ['n', 'N']:
-	cur_start_time = datetime.utcnow()
+	cur_start_time = datetime.now(tz=pytz.UTC)
 else:
 	cur_start_time = parser.parse(cur_start_time)
 speed_factor = float(input('What is the simulation speed-up factor? : '))
@@ -82,7 +82,7 @@ if confirm[0] in ['Y', 'y']:
 		json.dump(timings, f)
 
 	shutil.copyfile(master_file, lsr_endpoint_dir + master_file)
-	
+
 	print("Simulation timing started.")
 	print("Nothing is actually happening yet...")
 	print("To do that, run simulation_radar.py (radar scans) and simulation_warning.py (warning text).")

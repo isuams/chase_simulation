@@ -1,4 +1,4 @@
-#!/usr/local/miniconda3/bin/python
+#!/usr/bin/env python
 
 """
 Simulation Looper - Radar
@@ -16,12 +16,11 @@ Also, handles site folder creation.
 """
 
 # Imports
-import glob, json, os, pytz, re, requests, textwrap, time
+import glob, json, os, pytz, re, requests, textwrap, time, shutil
 from sqlite3 import dbapi2 as sql
 from datetime import datetime, timedelta
 from dateutil import parser, tz
 from ChaseLib.Timing import arc_time_from_cur, cur_time_from_arc, std_fmt
-from ChaseLib.Radar import *
 
 
 # Critical Files/Directories
@@ -32,6 +31,7 @@ radar_deploy_dir = '/home/jthielen/WWW/chase/l2data/'
 
 # Minimum amount of time to wait between loops
 min_sleep = 10
+max_sleep = 20
 
 # Establish DB connection
 rad_con = sql.connect(rad_db_file)
@@ -64,11 +64,11 @@ if settings['simulation_running']:
         
 
         # Get the now times
-        cur_now = datetime.utcnow()
-        arc_now = arc_time_from_cur(cur_now)
+        cur_now = datetime.now(tz=pytz.UTC)
+        arc_now = arc_time_from_cur(cur_now, settings)
 
         # Check if any scans to release
-        rad_cur.execute('SELECT * FROM scans WHERE time <= ? AND munged = 0', [arc_now.strftime(std_fmt)])
+        rad_cur.execute('SELECT * FROM scans WHERE time <= ? AND (munged = 0 or munged IS NULL)', [arc_now.strftime(std_fmt)])
         scans_to_release = rad_cur.fetchall()
 
         if len(scans_to_release) > 0:
@@ -83,7 +83,7 @@ if settings['simulation_running']:
                 # Get scan vars
                 site = scan_row[1]
                 arc_scan_time = scan_row[0]
-                cur_scan_time = cur_time_from_arc(arc_scan_time)
+                cur_scan_time = cur_time_from_arc(arc_scan_time, settings)
                 arc_file = scan_row[2]
 
                 # Status
@@ -101,12 +101,16 @@ if settings['simulation_running']:
                     parser.parse(cur_scan_time).strftime('%Y/%m/%d %H:%M:%S'),
                     arc_file
                 )
-                list_cmd = "ls -l {dir}{site}* | awk '{{print $6 \" \" $10}}' > {dir}dir.list".format(dir=site_deploy_dir, site=site)
+                list_cmd = "ls -l {site}* | awk '{{print $5 \" \" $9}}' > dir.list".format(site=site)
                 cur_file = parser.parse(cur_scan_time).strftime(site + '%Y%m%d_%H%M%S')
 
                 os.system(munge_cmd)
-                os.rename(cur_file, site_deploy_dir + cur_file)
+                shutil.copyfile(cur_file, site_deploy_dir + cur_file)
+                os.remove(cur_file)
+                proper_dir = os.path.dirname(os.path.realpath(__file__))
+                os.chdir(site_deploy_dir)
                 os.system(list_cmd)
+                os.chdir(proper_dir)
 
 
                 # Finally, log it as processed
@@ -120,7 +124,7 @@ if settings['simulation_running']:
 
 
         # Find the next scan to release
-        rad_cur.execute('SELECT * FROM scans WHERE munged = 0 ORDER BY time ASC LIMIT 1')
+        rad_cur.execute('SELECT * FROM scans WHERE (munged = 0 or munged IS NULL) ORDER BY time ASC LIMIT 1')
         scans_in_waiting = rad_cur.fetchall()
 
 
@@ -128,13 +132,16 @@ if settings['simulation_running']:
 
             # We have a next scan, sleep until it comes
             arc_next = parser.parse(scans_in_waiting[0][0])
-            cur_next = cur_time_from_arc(arc_next)
+            cur_next = cur_time_from_arc(arc_next, settings)
 
             print('\tNext scan incoming at {}...'.format(cur_next.strftime(std_fmt)))
 
-            sleep = (cur_next - datetime.utcnow()).seconds + 1
+            sleep = (cur_next - datetime.now(tz=pytz.UTC)).seconds + 1
             if sleep < min_sleep:
                 sleep = min_sleep # Don't need to be going too rapid fire...
+            elif sleep > max_sleep:
+                sleep = max_sleep # Don't wait for any bugs in timing
+            print('\tSleeping for {} seconds {}'.format(sleep, json.dumps([cur_next.strftime(std_fmt), datetime.now(tz=pytz.UTC).strftime(std_fmt)])))
             time.sleep(sleep)
 
         else:

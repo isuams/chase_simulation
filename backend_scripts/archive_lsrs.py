@@ -1,4 +1,4 @@
-#!/usr/local/miniconda3/bin/python
+#!/usr/bin/env python
 
 """
 Archive LSRs

@@ -1,4 +1,4 @@
-#!/usr/local/miniconda3/bin/python
+#!/usr/bin/env python
 
 """
 Simulation Looper - Warnings
@@ -65,12 +65,12 @@ if settings['simulation_running']:
 		
 
 		# Get the now times
-		cur_now = datetime.utcnow()
-		arc_now = arc_time_from_cur(cur_now)
+		cur_now = datetime.now(tz=pytz.UTC)
+		arc_now = arc_time_from_cur(cur_now, settings)
 
 
 		# Check if any warnings to release
-		warn_cur.execute('SELECT * FROM warnings_raw WHERE valid <= ? AND processed = 0', [arc_now.strftime(std_fmt)])
+		warn_cur.execute('SELECT * FROM warnings_raw WHERE valid <= ? AND (processed = 0 OR processed IS NULL)', [arc_now.strftime(std_fmt)])
 		warnings_to_release = warn_cur.fetchall()
 
 		if len(warnings_to_release) > 0:
@@ -102,7 +102,7 @@ if settings['simulation_running']:
 
 
 		# Find the next warning to release
-		warn_cur.execute('SELECT * FROM warnings_raw WHERE processed = 0 ORDER BY valid ASC LIMIT 1')
+		warn_cur.execute('SELECT * FROM warnings_raw WHERE (processed = 0 OR processed IS NULL) ORDER BY valid ASC LIMIT 1')
 		warnings_in_waiting = warn_cur.fetchall()
 
 
@@ -110,11 +110,11 @@ if settings['simulation_running']:
 
 			# We have a next warning, sleep until it comes
 			arc_next = parser.parse(warnings_in_waiting[0][0])
-			cur_next = cur_time_from_arc(arc_next)
+			cur_next = cur_time_from_arc(arc_next, settings)
 
 			print('\tNext warning incoming at {}...'.format(cur_next.strftime(std_fmt)))
 
-			sleep = (cur_next - datetime.utcnow()).seconds + 1
+			sleep = (cur_next - datetime.now(tz=pytz.UTC)).seconds + 1
 			if sleep < min_sleep:
 				sleep = min_sleep # Don't need to be going too rapid fire...
 			time.sleep(sleep)

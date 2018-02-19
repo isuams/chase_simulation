@@ -5,10 +5,10 @@ LSR-specific helper functions
 """
 
 # Imports
-import pytz
+import pytz, textwrap
 from datetime import datetime, timedelta
 from dateutil import parser, tz
-from Timing import arc_time_from_cur, cur_time_from_arc
+from .Timing import arc_time_from_cur, cur_time_from_arc
 
 # Go from lsr `type` to gr_icon (also used to just keep our LSRs of interest)
 def type_to_icon(type_str):
@@ -19,7 +19,7 @@ def type_to_icon(type_str):
         return None
 
 # Create a GR Placefile entry for a lsr tuple
-def gr_lsr_placefile_row(lsr_tuple, wrap_length):
+def gr_lsr_placefile_entry_from_tuple(lsr_tuple, wrap_length):
     return """Object: {lat:.2f}, {lon:.2f}
 Icon: 0,0,000,{icon},1,"{text}"
 End:""".format(lat=lsr_tuple[2], lon=lsr_tuple[3], icon=type_to_icon(lsr_tuple[8]), text=("%r"%gr_lsr_text(lsr_tuple, wrap_length=wrap_length))[1:-1])
@@ -36,8 +36,7 @@ def gr_lsr_text(lsr_tuple, wrap_length):
     if fields[0] == 'HAIL':
         fields[-1] = '{} INCH'.format(lsr_tuple[4])
 
-    pad = str(max([len(field) for field in fields[0:4]]))
-    template = 'Event:  {:>'+pad+'}\nTime:   {:>'+pad+'}\nPlace:  {:>'+pad+'}\nCounty: {:>'+pad+'}\nSource: {:>'+pad+'}\n\n{}'
+    template = 'Event:  {}\nTime:   {}\nPlace:  {}\nCounty: {}\nSource: {}\n\n{}'
 
     return template.format(*fields)
 

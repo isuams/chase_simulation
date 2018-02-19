@@ -6,7 +6,7 @@ Warning-related helper functions
 import glob, json, os, pytz, re, time
 from datetime import datetime, timedelta
 from dateutil import parser, tz
-from Timing import arc_time_from_cur, cur_time_from_arc, std_fmt
+from .Timing import arc_time_from_cur, cur_time_from_arc, std_fmt
 
 
 # Process the warning text (heavy lifiting!)
@@ -35,7 +35,7 @@ def process_warning_text(warning, timings):
 	matches = list(re.finditer(r'(?P<timestamp>[0-9]{2}(0[1-9]|1[0-2])([0-2][1-9]|3[0-1])T(([0-1][0-9])|(2[0-3]))([0-5][0-9])Z)', warning))
 	offset = 0
 	for match in matches:
-	    new_timestamp = cur_time_from_arc(parser.parse(match.group('timestamp'), yearfirst=True)).strftime('%y%m%dT%H%MZ')
+	    new_timestamp = cur_time_from_arc(parser.parse(match.group('timestamp'), yearfirst=True), timings).strftime('%y%m%dT%H%MZ')
 	    text_growth = len(new_timestamp) - len(match.group('timestamp'))
 	    
 	    warning = warning[0:(match.start('timestamp')+offset)] + new_timestamp + warning[(match.end('timestamp')+offset):]
@@ -46,8 +46,8 @@ def process_warning_text(warning, timings):
 	warning_arc_end_time = parser.parse(matches[1].group('timestamp'), yearfirst=True)
 
 	# Replace the %d%H%M strings for start and end
-	warning = warning.replace(warning_arc_time.strftime('%d%H%M'), cur_time_from_arc(warning_arc_time).strftime('%d%H%M'))
-	warning = warning.replace(warning_arc_end_time.strftime('%d%H%M'), cur_time_from_arc(warning_arc_end_time).strftime('%d%H%M'))
+	warning = warning.replace(warning_arc_time.strftime('%d%H%M'), cur_time_from_arc(warning_arc_time, timings).strftime('%d%H%M'))
+	warning = warning.replace(warning_arc_end_time.strftime('%d%H%M'), cur_time_from_arc(warning_arc_end_time, timings).strftime('%d%H%M'))
 
 	# Update the '622 PM CDT SUN MAY 22 2016' string
 	match = re.search(r'(?P<time>[0-9]+) (?P<apm>PM|AM) (?P<zone>CDT|MDT) (?P<weekday>[A-Z]{3}) (?P<month>[A-Z]{3}) (?P<day>[0-2][1-9]|3[0-1]) (?P<year>20[0-9]{2})', warning)
@@ -65,7 +65,7 @@ def process_warning_text(warning, timings):
 	    
 	    arc_local_time = parser.parse('{}-{}-{}T{}:{}{}'.format(year, month, day, hour, minute, zone))
 	    arc_utc_time = arc_local_time.astimezone(pytz.UTC)
-	    cur_utc_time = cur_time_from_arc(arc_utc_time)
+	    cur_utc_time = cur_time_from_arc(arc_utc_time, timings)
 	    cur_cdt_time = cur_utc_time.astimezone(tz.tzoffset(None, -18000))
 	    
 	    str_to_swap = []
@@ -95,7 +95,7 @@ def process_warning_text(warning, timings):
 	            
 	        arc_local_time = parser.parse('{}-{}-{}T{}:{}{}'.format(year, month, day, hour, minute, zone))
 	        arc_utc_time = arc_local_time.astimezone(pytz.UTC)
-	        cur_utc_time = cur_time_from_arc(arc_utc_time)
+	        cur_utc_time = cur_time_from_arc(arc_utc_time, timings)
 	        cur_cdt_time = cur_utc_time.astimezone(tz.tzoffset(None, -18000))
 	        
 	        replacement = cur_cdt_time.strftime('%-I%M %p') + ' CDT'
@@ -104,5 +104,5 @@ def process_warning_text(warning, timings):
 	        warning = warning[0:(match.start()+offset)] + replacement + warning[(match.end()+offset):]
 	        offset += text_growth
 
-    # All done with the processing! Return the processed text and the valid cur time
-    return warning, cur_time_from_arc(warning_arc_time)
+	# All done with the processing! Return the processed text and the valid cur time
+	return warning, cur_time_from_arc(warning_arc_time, timings)

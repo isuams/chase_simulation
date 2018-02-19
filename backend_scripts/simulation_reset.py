@@ -1,4 +1,4 @@
-#!/usr/local/miniconda3/bin/python
+#!/usr/bin/env python
 
 """
 @todo clear the master.json file, clear the output warning and radar folders, and reset warning.db and radar.db to be unprocessed
@@ -21,6 +21,7 @@ prompt to start simulation_radar.py and simulation_warning.py, and exit
 
 # Imports
 import json, os, pytz, shutil
+from sqlite3 import dbapi2 as sql
 from datetime import datetime, timedelta
 from dateutil import parser, tz
 from ChaseLib.Timing import std_fmt
@@ -76,7 +77,7 @@ if confirm[0] in ['Y', 'y']:
 		os.system("touch {dir}dir.list".format(dir=radar_deploy_dir+ site + '/'))
 
 	# Mark the databases as unprocessed/unmunged
-	warn_cur.execute('UPDATE warnigns_raw SET processed = 0')
+	warn_cur.execute('UPDATE warnings_raw SET processed = 0')
 	warn_con.commit()
 	rad_cur.execute('UPDATE scans SET munged = 0')
 	rad_con.commit()

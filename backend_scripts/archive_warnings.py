@@ -1,4 +1,4 @@
-#!/usr/local/miniconda3/bin/python
+#!/usr/bin/env python
 
 """
 Archive Warnings
@@ -46,7 +46,7 @@ warnings_endpoint = 'http://mesonet.agron.iastate.edu/json/nwstext_search.py?sts
 warnings = []
 for hazard in ['TOR', 'SVR', 'FFW']:
     for wfo in wfos:
-    	print('Downloading {}{}...'.format(hazard, wfo))
+        print('Downloading {}{}...'.format(hazard, wfo))
         r = requests.get(warnings_endpoint.format(
             start=arc_start_time.strftime('%Y-%m-%dT%H:%MZ'),
             end=arc_end_time.strftime('%Y-%m-%dT%H:%MZ'),
