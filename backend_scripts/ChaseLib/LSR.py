@@ -9,6 +9,7 @@ import pytz, textwrap
 from datetime import datetime, timedelta
 from dateutil import parser, tz
 from .Timing import arc_time_from_cur, cur_time_from_arc
+from math import floor
 
 # Go from lsr `type` to gr_icon (also used to just keep our LSRs of interest)
 def type_to_icon(type_str):
@@ -18,11 +19,25 @@ def type_to_icon(type_str):
     else:
         return None
 
+# Go from the type and magnitude to the correct sprite location
+def get_hail_pos(type, size):
+    # If not hail, it is one
+    if type != 'HAIL':
+        return 1
+    else:
+        pos = floor(float(size)/0.25) + 1
+        if pos > 16:
+            return 16 # Max out at 16
+        elif pos < 1:
+            return 1 # Min at 1
+        else:
+            return pos
+
 # Create a GR Placefile entry for a lsr tuple
 def gr_lsr_placefile_entry_from_tuple(lsr_tuple, wrap_length):
     return """Object: {lat:.2f}, {lon:.2f}
-Icon: 0,0,000,{icon},1,"{text}"
-End:""".format(lat=lsr_tuple[2], lon=lsr_tuple[3], icon=type_to_icon(lsr_tuple[8]), text=("%r"%gr_lsr_text(lsr_tuple, wrap_length=wrap_length))[1:-1])
+Icon: 0,0,000,{icon},{pos},"{text}"
+End:""".format(lat=lsr_tuple[2], lon=lsr_tuple[3], icon=type_to_icon(lsr_tuple[8]), pos=get_hail_pos(lsr_tuple[9], lsr_tuple[4]) text=("%r"%gr_lsr_text(lsr_tuple, wrap_length=wrap_length))[1:-1])
 
 # Create the GR LSR text box text
 def gr_lsr_text(lsr_tuple, wrap_length):

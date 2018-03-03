@@ -77,7 +77,7 @@ Threshold: 999
 Title: Live Storm Reports (LSRs)
 Font: 1, 11, 0, "Courier New"
 IconFile: 1, 25, 25, 11, 11, "{url}Lsr_FunnelCloud_Icon.png"
-IconFile: 2, 25, 25, 11, 11, "{url}Lsr_Hail_Icon.png"
+IconFile: 2, 25, 32, 11, 11, "{url}Lsr_Hail_Icons.png"
 IconFile: 3, 25, 25, 11, 11, "{url}Lsr_Tornado_Icon.png"
 IconFile: 4, 25, 25, 11, 11, "{url}Lsr_TstmWndDmg_Icon.png"
 """.format(url=lsr_asset_url))
