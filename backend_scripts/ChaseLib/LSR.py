@@ -19,19 +19,25 @@ def type_to_icon(type_str):
     else:
         return None
 
+
 # Go from the type and magnitude to the correct sprite location
 def get_hail_pos(type, size):
     # If not hail, it is one
     if type != 'HAIL':
         return 1
     else:
-        pos = floor(float(size)/0.25) + 1
+        try:
+            pos = floor(float(size)/0.25) + 1
+        except Exception as e:
+            return 1 # If it errors, just basic
+        
         if pos > 16:
             return 16 # Max out at 16
         elif pos < 1:
             return 1 # Min at 1
         else:
             return pos
+
 
 # Create a GR Placefile entry for a lsr tuple
 def gr_lsr_placefile_entry_from_tuple(lsr_tuple, wrap_length):

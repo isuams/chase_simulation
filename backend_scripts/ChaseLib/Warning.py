@@ -49,6 +49,11 @@ def process_warning_text(warning, timings):
 	warning = warning.replace(warning_arc_time.strftime('%d%H%M'), cur_time_from_arc(warning_arc_time, timings).strftime('%d%H%M'))
 	warning = warning.replace(warning_arc_end_time.strftime('%d%H%M'), cur_time_from_arc(warning_arc_end_time, timings).strftime('%d%H%M'))
 
+	# Clean out the double time zone strings
+	matches = list(re.finditer(r'(?P<time_keep>[0-9]+ (PM|AM) (CDT|MDT))\/([0-9]+ (PM|AM) (CDT|MDT))\/?', warning))
+	for match in matches:
+	    warning = warning.replace(match.group(), match.group('time_keep'))
+
 	# Update the '622 PM CDT SUN MAY 22 2016' string
 	match = re.search(r'(?P<time>[0-9]+) (?P<apm>PM|AM) (?P<zone>CDT|MDT) (?P<weekday>[A-Z]{3}) (?P<month>[A-Z]{3}) (?P<day>[0-2][1-9]|3[0-1]) (?P<year>20[0-9]{2})', warning)
 	if match:
