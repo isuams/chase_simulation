@@ -19,16 +19,6 @@ def process_warning_text(warning, timings):
 
 	# Now that we have that, process piece by piece!
 
-	# Easy thing first...find the storm motion and multiply by `speed_factor`
-	matches = list(re.finditer(r' (?P<speed>[0-9]+)(?P<unit>KT) ', warning))
-	offset = 0
-	for match in matches:
-	    new_speed = str(int(match.group('speed'))*4)
-	    text_growth = len(new_speed) - len(match.group('speed'))
-	    
-	    warning = warning[0:(match.start('speed')+offset)] + new_speed + warning[(match.end('speed')+offset):]
-	    offset += text_growth
-
 	# Now let's try the %y%m%dT%H%MZ formated times
 	# Note: parser.parse('160522T2322Z', yearfirst=True) parses out the warning start/end times to datetime objects
 
