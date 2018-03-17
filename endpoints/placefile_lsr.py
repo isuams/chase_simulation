@@ -54,7 +54,7 @@ with open(master_file) as master_data:
 # Output
 
 # Output HTTP Header
-print("Content-type: application/json\r\n\r\n")
+print("Content-type: text/plain\r\n")
 
 # Header
 print("""\n
