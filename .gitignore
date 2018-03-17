@@ -1,2 +1,5 @@
 # Don't include the .db files
 *.db
+
+# Don't include the working directory (for cross-system comparisons)
+.working/

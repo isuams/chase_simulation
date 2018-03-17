@@ -8,24 +8,29 @@ This script archives Warnings for use in the simulation.
 
 Data provided by the IEM's wonderful JSON APIs.
 
-Once you run this script to get all the warning.db database, copy it over to wherever you have your simulation scripts.
+Once you run this script to get all the warning.db database, copy it over to
+wherever you have your simulation scripts.
 
 ! IMPORTANT !
-Update the constants to their proper values, and update the shebang above to your conda environment.
+Update the constants to their proper values, and update the shebang above to
+your conda environment.
 
 What this script does:
 
 - Gets the Warnings from IEM
 - Adds on GR's \x03 termination character
-- Saves them into a database for use by the `simulation_warning.py` script during the simulation
+- Saves them into a database for use by the `simulation_warning.py` script
+    during the simulation
 
 """
 
 # Imports
-import glob, json, os, pytz, re, requests, textwrap, time
+import pytz
+import re
+import requests
 from sqlite3 import dbapi2 as sql
-from datetime import datetime, timedelta
-from dateutil import parser, tz
+from datetime import datetime
+from dateutil import parser
 from ChaseLib.Timing import std_fmt
 
 # Constants
@@ -40,7 +45,9 @@ wfos = ('MAF', 'LUB', 'OUN')
 # Processing
 
 # Build the endpoint URL to access the IEM archive
-warnings_endpoint = 'http://mesonet.agron.iastate.edu/json/nwstext_search.py?sts={start}&ets={end}&awipsid={hazard}{wfo}'
+warnings_endpoint = ('http://mesonet.agron.iastate.edu/json/' +
+                     'nwstext_search.py?sts={start}&ets={end}&' +
+                     'awipsid={hazard}{wfo}')
 
 # Loop over all the warning products
 warnings = []
@@ -63,7 +70,9 @@ print('Creating local database...')
 
 warn_con = sql.connect("warning.db")
 warn_cur = warn_con.cursor()
-warn_cur.execute("CREATE TABLE warnings_raw (valid datetime, text char, processed tinyint)")
+warn_cur.execute(
+    "CREATE TABLE warnings_raw (valid datetime, text char, processed tinyint)"
+)
 warn_con.commit()
 
 # Save the data
@@ -73,8 +82,15 @@ query = "INSERT INTO warnings_raw (valid, text) VALUES (?,?)"
 for warning in warnings:
 
     # Find the valid time
-    match = re.search(r'(?P<timestamp>[0-9]{2}(0[1-9]|1[0-2])([0-2][1-9]|3[0-1])T(([0-1][0-9])|(2[0-3]))([0-5][0-9])Z)', warning)
-    valid = parser.parse(match.group('timestamp'), yearfirst=True).strftime(std_fmt)
+    match = re.search(
+        (r'(?P<timestamp>[0-9]{2}(0[1-9]|1[0-2])([0-2][1-9]|3[0-1])' +
+         r'T(([0-1][0-9])|(2[0-3]))([0-5][0-9])Z)'),
+        warning
+    )
+    valid = parser.parse(
+        match.group('timestamp'),
+        yearfirst=True
+    ).strftime(std_fmt)
 
     # Save the row
     warn_cur.execute(query, [valid, warning])
