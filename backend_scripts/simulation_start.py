@@ -107,7 +107,7 @@ To reset, run
     simulation_reset.py,
 and to pause, hack on the master file.
 
-Have fun!")
+Have fun!
 """)
 
 else:

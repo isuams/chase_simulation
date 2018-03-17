@@ -115,7 +115,7 @@ if settings['simulation_running']:
                     arc_file
                 )
                 list_cmd = ("ls -l {site}* | awk '{{print $5 \" \" $9}}' > " +
-                            "dir.list".format(site=site))
+                            "dir.list").format(site=site)
                 cur_file = parser.parse(
                     cur_scan_time
                 ).strftime(site + '%Y%m%d_%H%M%S')
