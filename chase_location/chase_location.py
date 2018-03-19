@@ -13,27 +13,29 @@ import datetime
 # Specify constants that can shouldn't be reset prior to introduction if
 # statements. Other constants are assigned later and may be changed.
 home = os.path.expanduser('~')
+netid = "jthielen"
 fname = "%s/teamdat.db" % (home,)
-teamfile_location = "/home/tuftedal/WWW/chase/loc/"
+teamfile_location = "/home/%s/WWW/chase/loc/" % (netid)
 
 # For testing on my home computer.
 #home_dir = home.replace('\\', '/')
 #fname = "%s/Downloads/teamdat.db" % (home_dir,)
 #teamfile_location = "%s/Desktop/" % (home_dir,)
 
-sim_time        = 95    # in minutes
+sim_time        = 103    # in minutes
 speedup         = 4.00  # how much faster the simulation is when compared to realtime (obtained when running radar script)
-slp_time        = 65    # approximate time between radar scans (in real-time seconds)
+slp_time        = 55    # approximate time between radar scans (in real-time seconds)
 spd_limit       = 65    # in mph.
 fill_rate       = 15    # rate at which a fuel pump fills a gas tank (in seconds per gallon)
-stuck_time      = 45    # how long after sim start that people can start getting stuck (in real-time minutes)
-cc_time         = 25    # how long after sim start that people can start experiencing chaser convergence (in real-time minutes)
-sunset_time     = 60    # how long after sim start that the sun sets in the simulation (in real-time minutes); this affects hazard chances
+stuck_time      = 40    # how long after sim start that people can start getting stuck (in real-time minutes)
+cc_time         = 20    # how long after sim start that people can start experiencing chaser convergence (in real-time minutes)
+sunset_time     = 75    # how long after sim start that the sun sets in the simulation (in real-time minutes); this affects hazard chances
 dr_chance       = .1    # chance of driving onto a dirt road
-cc_chance       = .05   # chance of getting stuck in chaser convergence
+cc_chance       = .035  # chance of getting stuck in chaser convergence
 tire_chance     = .001  # chance of popping a tire during the sim (same for all vehicle types)
 dead_end_chance = .005  # chance of hitting a dead end during the sim (same for all vehicle types)
 flood_chance    = .0025 # chance of hitting a flooded roadway during the sim (same for all vehicle types)
+extra_all_time  = 30    # adding extra time to the _all placefile to avoid disappearing (in seconds)
 
 print "" # in the gui, any print statements should be converted to status messages
 	 # (for example, text would go in the blank white box at the bottom of chase_main_screen.py)
@@ -65,7 +67,9 @@ if os.path.exists(fname) == True:
     time_step    = d['time_step']
     direct       = d['direct']
     dr_direct    = d['dr_direct']
+    dr_deg       = d['dr_deg']
     dist         = d['dist']
+    dr_dist      = d['dr_dist']
     cc_top_spd   = d['cc_top_spd']
     dr_top_spd   = d['dr_top_spd']
     aft_dark_inc = d['aft_dark_inc']
@@ -88,6 +92,7 @@ if os.path.exists(fname) == True:
                        \nIconFile: 5, 22, 22, 11, 11, "http://www.spotternetwork.org/icon/sn_reports_60.png"\
                        \nIconFile: 6, 22, 22, 11, 11, "http://www.spotternetwork.org/icon/spotternet_new.png"\n' % (Team_Name,)
     file_footertext = '\nText: 15, 10, 1, "%s"\nEnd:\n' % (Team_Name,)
+    file_footerend  = '\nEnd:\n'
 
     # Ensure that teams can't restart the program to skip sleep times.
     reset_time  = (time_now - time_step)
@@ -161,42 +166,93 @@ if os.path.exists(fname) == True:
 # If no savefile is present, start a new savefile for the team (used at the beginning of
 # the simulation for team name, vehicle, and location selection.)
 else:
+    print " ------------------------------------------------------------------------"
+    print "|                             Welcome to the                             |"
+    print "|              _____  _____ _    _            __  __  _____              |"
+    print "|             |_   _|/ ____| |  | |     /\   |  \/  |/ ____|             |"
+    print "|               | | | (___ | |  | |    /  \  | \  / | (___               |"
+    print "|               | |  \___ \| |  | |   / /\ \ | |\/| |\___ \              |"
+    print "|              _| |_ ____) | |__| |  / ____ \| |  | |____) |             |"
+    print "|             |_____|_____/ \____/  /_/    \_\_|  |_|_____/              |"
+    print "|                                                                        |"
+    print "|                        Storm Chasing Simulation                        |"
+    print " ------------------------------------------------------------------------"
+    print ""
+    print "A few things before we get started..."
+    print ""
+    print "Change your radar polling location to:"
+    print "http://www.meteor.iastate.edu/~%s/chase/l2data/" % (netid,)
+    print ""
+    print "Change your warning server to:"
+    print "http://www.meteor.iastate.edu/~%s/chase/warnings/" % (netid,)
+    print ""
+    print "Add a placefile for Live Storm Reports (LSRs):"
+    print "http://www.meteor.iastate.edu/~%s/chase/endpoints/placefile_lsr.py" % (netid,)
+    print ""
+    print ""
+    raw_input("Once you have that all taken care of, press any key to continue. ")
+    time.sleep(1)
+    print ""
+    print "Not the key I would've pressed, but alright, let's do this."
+    time.sleep(4)
+    print "Oh, and don't fold the maps."
+    print ""
+    print "------------------------------------------------------------------------"
+    print ""
+    time.sleep(3)
+
     # Create team database file then ask for team name and create a separate
     # variable for use as a file name.
     Team_Name = raw_input("Enter a team name: ")
-    if (Team_Name.title() == "Cow") or (Team_Name.title() == "Cows"):
-        print ""
-        print "I gotta go Julia, we got cows!"
-    elif (Team_Name.title() == "Bill Paxton") or (Team_Name.title() == "Bill Harding"):
-        print ""
-        print 'Why do you call Billy "The Extreme?"'
-        print 'Because Billy *is* "The Extreme."'
-        Team_Name = "The Extreme"
-    elif (Team_Name.title() == "Helen Hunt") or (Team_Name.title() == "Jo Harding"):
-        print ""
-        print "Hang on a second, boss lady, hold your horses."
-        Team_Name = "Boss Lady"
-    elif (Team_Name.title() == "Philip Seymour Hoffman") or (Team_Name.title() == "Dusty"):
-        print ""
-        print "It's the wonder of nature, baby!"
-        Team_Name = "Dusty"
-    elif (Team_Name.title() == "Rabbit"):
-        print ""
-        print "Uh... yeah, trust me. Rabbit is good, Rabbit is wise."
-    elif (Team_Name.upper() == "F5") or (Team_Name.title() == "EF5"):
-        print ""
-        print "Is there an F5? What would that be like?"
-        Team_Name = "The Finger of God"
-    elif (Team_Name.title() == "The Suck Zone") or (Team_Name.title() == "Suck Zone"):
-        print ""
-        print "... and it NEVER hits the ground!"
-        Team_Name = "The Suck Zone"
-    elif (Team_Name.title() == "Columbus"):
-        print ""
-        print "Susan, get my pants!"
-    
     C_Team_Name = Team_Name.replace(" ", "_")
 
+    # While statement to check and see if the selected team name already exists.
+    while os.path.exists("%s%s.php" % (teamfile_location, C_Team_Name,)) == True:
+        print ""
+	print "That team name is already in use."
+	Team_Name = raw_input("Please enter another team name: ")
+	C_Team_Name = Team_Name.replace(" ", "_")
+    else:
+        file1 = open("%s%s.php" % (teamfile_location, C_Team_Name,), "w" )
+	file1.close()
+        if (Team_Name.title() == "Cow") or (Team_Name.title() == "Cows"):
+            print ""
+            print "I gotta go Julia, we got cows!"
+        elif (Team_Name.title() == "Bill Paxton") or (Team_Name.title() == "Bill Harding"):
+            print ""
+            print 'Why do you call Billy "The Extreme?"'
+            print 'Because Billy *is* "The Extreme."'
+            Team_Name = "The Extreme"
+            C_Team_Name = Team_Name.replace(" ", "_")
+        elif (Team_Name.title() == "Helen Hunt") or (Team_Name.title() == "Jo Harding"):
+            print ""
+            print "Hang on a second, boss lady, hold your horses."
+            Team_Name = "Boss Lady"
+            C_Team_Name = Team_Name.replace(" ", "_")
+        elif (Team_Name.title() == "Philip Seymour Hoffman") or (Team_Name.title() == "Dusty"):
+            print ""
+            print "It's the wonder of nature, baby!"
+            Team_Name = "Dusty"
+            C_Team_Name = Team_Name.replace(" ", "_")
+        elif (Team_Name.title() == "Rabbit"):
+            print ""
+            print "Uh... yeah, trust me. Rabbit is good, Rabbit is wise."
+        elif (Team_Name.upper() == "F5") or (Team_Name.title() == "EF5"):
+            print ""
+            print "Is there an F5? What would that be like?"
+            Team_Name = "The Finger of God"
+            C_Team_Name = Team_Name.replace(" ", "_")
+        elif (Team_Name.title() == "The Suck Zone") or (Team_Name.title() == "Suck Zone"):
+            print ""
+            print "... and it NEVER hits the ground!"
+            Team_Name = "The Suck Zone"
+            C_Team_Name = Team_Name.replace(" ", "_")
+        elif (Team_Name.title() == "Columbus"):
+            print ""
+            print "Susan, get my pants!"
+        file1 = open("%s%s.php" % (teamfile_location, C_Team_Name,), "w" )
+	file1.close()
+    
     if (Team_Name == "The Extreme") or (Team_Name == "Boss Lady"):
         Car_Type = "Pickup"
         print ""
@@ -242,7 +298,7 @@ else:
         #Pre-sets for pickup.
         car_number   = 4
         top_speed    = 130.
-        dr_top_spd   = 70.
+        dr_top_spd   = 65.
         mpg          = 18.
         fuel_cap     = 20.
         stuck_chance = .004
@@ -250,7 +306,7 @@ else:
         #Pre-sets for suv.
         car_number   = 5
         top_speed    = 125.
-        dr_top_spd   = 65.
+        dr_top_spd   = 60.
         mpg          = 24.
         fuel_cap     = 20.
         stuck_chance = .006
@@ -290,7 +346,7 @@ else:
             #Pre-sets for pickup.
             car_number   = 4
             top_speed    = 130.
-            dr_top_spd   = 70.
+            dr_top_spd   = 65.
             mpg          = 18.
             fuel_cap     = 20.
             stuck_chance = .004
@@ -298,7 +354,7 @@ else:
             #Pre-sets for suv.
             car_number   = 5
             top_speed    = 125.
-            dr_top_spd   = 65.
+            dr_top_spd   = 60.
             mpg          = 24.
             fuel_cap     = 20.
             stuck_chance = .006
@@ -335,7 +391,10 @@ else:
     cc_turns     = 0
     dead_check   = 0
     dr_check     = 0
+    dr_dist      = 0
     dist         = 0
+    deg          = 0
+    dr_deg       = 0
     new_deg      = 0
     direct       = 0
     old_direct   = 0
@@ -350,7 +409,6 @@ else:
     fuel_level = fuel_cap - random.randint(1,(fuel_cap-2))
     
     # Create the team specific placefile using the entered team name.
-    file1 = open("%s%s.php" % (teamfile_location, C_Team_Name,), "w" )
     file_headertext = 'RefreshSeconds: 10\
                        \nThreshold: 999\
                        \nTitle: Location of Team %s\
@@ -362,6 +420,8 @@ else:
                        \nIconFile: 5, 22, 22, 11, 11, "http://www.spotternetwork.org/icon/sn_reports_60.png"\
                        \nIconFile: 6, 22, 22, 11, 11, "http://www.spotternetwork.org/icon/spotternet_new.png"\n' % (Team_Name,)
     file_footertext = '\nText: 15, 10, 1, "%s"\nEnd:\n' % (Team_Name,)
+    file_footerend  = '\nEnd:\n'
+    file1 = open("%s%s.php" % (teamfile_location, C_Team_Name,), "w" )
     file1.write(file_headertext)
     file1.write('Object: %s,%s\n' % (lat, lon))
     file1.write(r'Icon: 0,0,000,6,2, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nFuel Remaining: %.2f gallons"' % \
@@ -369,17 +429,26 @@ else:
     file1.write(file_footertext)
     file1.close()
 
-    # Create the team specific placefile to save all times (for use in end chase recap).
-    file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "w" )
+    # Create the team specific placefile to save a moving placefile.
+    file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "w" )
     file2.write(file_headertext)
     file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (init_time.strftime("%Y-%m-%d"),init_time.strftime("%H:%M:%S"), \
                                               init_time.strftime("%Y-%m-%d"), \
-                                              (init_time+datetime.timedelta(seconds=(slp_time))).strftime("%H:%M:%S")))
+                                              (init_time+datetime.timedelta(seconds=(slp_time+extra_all_time))).strftime("%H:%M:%S")))
     file2.write('Object: %s,%s\n' % (lat, lon))
     file2.write(r'Icon: 0,0,000,6,2, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nFuel Remaining: %.2f gallons"' % \
                 (Team_Name,init_time.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,fuel_level,))
     file2.write(file_footertext)
     file2.close()
+
+    # Create the team specific placefile to save a placefile with all points.
+    file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "w" )
+    file3.write(file_headertext)
+    file3.write('Object: %s,%s\n' % (lat, lon))
+    file3.write(r'Icon: 0,0,000,6,2, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nFuel Remaining: %.2f gallons"' % \
+                (Team_Name,init_time.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,fuel_level,))
+    file3.write(file_footertext)
+    file3.close()
 
     # Create the team's specific data file and save their entered variables.
     d                 = shelve.open(fname)
@@ -403,10 +472,12 @@ else:
     d['dead_check']   = dead_check
     d['dr_check']     = dr_check
     d['dist']         = dist
+    d['dr_dist']      = dr_dist
     d['new_deg']      = new_deg
     d['direct']       = direct
     d['old_direct']   = old_direct
     d['dr_direct']    = dr_direct
+    d['dr_deg']       = dr_deg
     d['cc_top_spd']   = cc_top_spd
     d['aft_dark_inc'] = aft_dark_inc
     d['sun_check']    = sun_check
@@ -414,12 +485,16 @@ else:
     d['fuel_level']   = fuel_level
  
 
-    # Print the file name to add to placefile. MODIFY THE NET-ID TO WHOEVER IS RUNNING THE RADAR CODE
+    # Print the file name to add to placefile. MODIFY THE netid VAR TO WHOEVER IS RUNNING THE RADAR CODE
     print ""
     print ""
-    print "Please type the following into your placefile window in GR.:"
+    print "Please type or copy both of the following links into your placefile window in GR.:"
     print ""
-    print "http://www.meteor.iastate.edu/~tuftedal/chase/loc/%s.php" % (C_Team_Name,)
+    print "Single time step placefile:"
+    print "http://www.meteor.iastate.edu/~%s/chase/loc/%s.php" % (netid,C_Team_Name,)
+    print ""
+    print "Moving with animated radar placefile:"
+    print "http://www.meteor.iastate.edu/~%s/chase/loc/%s_moving.php" % (netid,C_Team_Name,)
     print ""
     print ""
 
@@ -589,7 +664,17 @@ while (mins <= sim_time):
     # For example, if 90 seconds elapse between radar scans, that would be 0.025 hours.
     speed = (3600. * dist) / (slp_time * speedup)
     speed = int(speed)
-    
+
+    # Check to see if a team is going the opposite direction on a dirt road.
+    op_deg = deg + 180
+    if op_deg >= 360:
+        op_deg -= 360
+
+    if (dr_check == 1) and (dr_deg == op_deg):
+        dr_dist -= dist
+    elif (dr_check == 1) and (direct == dr_direct):
+        dr_dist += dist
+
     if (cc_turns !=0) and (speed > cc_top_spd):
         speed = cc_top_spd
         dist  = (speed * slp_time * speedup) / 3600.
@@ -597,7 +682,7 @@ while (mins <= sim_time):
         print "The farthest you can go at your current top speed is %.1f miles." % (dist,)
         print ""
             
-    if (dr_check == 1) and (speed > dr_top_spd) and (direct == dr_direct):
+    if (dr_check == 1) and (speed > dr_top_spd) and (dr_dist > 0) and ((direct == dr_direct) or (dr_deg == op_deg)):
         speed = dr_top_spd
         dist  = (speed * slp_time * speedup) / 3600.
         print "You can't go that fast on a dirt road."
@@ -605,12 +690,12 @@ while (mins <= sim_time):
         print "Your team continues on the dirt road."
         print ""
 
-    elif (dr_check == 1) and (speed <= dr_top_spd) and (direct == dr_direct):
+    elif (dr_check == 1) and (speed <= dr_top_spd) and (dr_dist > 0) and ((direct == dr_direct) or (dr_deg == op_deg)):
         print "Your team continues on the dirt road."
         print ""
         
-    elif (dr_check == 1) and (direct != dr_direct):
-        print "You've turned off of the dirt road and can reach your top speed again."
+    elif ((dr_check == 1) and (direct != dr_direct) and (dr_deg != op_deg)) or ((dr_check == 1) and (dr_dist <= 0) and (dr_deg == op_deg)):
+        print "You've driven off of the dirt road and can reach your top speed again."
         print ""
         dr_check = 2
         if (speed > top_speed):
@@ -619,6 +704,7 @@ while (mins <= sim_time):
             print "Due to your vehicle's top speed, you can't go that far between scans."
             print "The farthest you can go at your top speed is %.1f miles." % (dist,)
             print ""
+            
     else:
         if (speed > top_speed):
             speed = top_speed
@@ -630,6 +716,7 @@ while (mins <= sim_time):
     d['speed']    = speed
     d['direct']   = direct
     d['dist']     = dist
+    d['dr_dist']  = dr_dist
     d['dr_check'] = dr_check
     
     # Checking the speed of the team and letting them know if their speed is too high.
@@ -738,11 +825,11 @@ while (mins <= sim_time):
     file1.write(file_footertext)
     file1.close()
 
-    # Update all times placefile.
-    file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+    # Update moving placefile.
+    file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
     file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                               time_step.strftime("%Y-%m-%d"), \
-                                              (time_step+datetime.timedelta(seconds=(slp_time))).strftime("%H:%M:%S")))
+                                              (time_step+datetime.timedelta(seconds=(slp_time+extra_all_time))).strftime("%H:%M:%S")))
     file2.write('Object: %s,%s\n' % (lat, lon))
     if (speed != 0):
         file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
@@ -753,6 +840,19 @@ while (mins <= sim_time):
                     (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,fuel_level))
     file2.write(file_footertext)
     file2.close()
+
+    # Update all times placefile.
+    file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+    file3.write('Object: %s,%s\n' % (lat, lon))
+    if (speed != 0):
+        file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+	file3.write(r'Icon: 0,0,000,6,2, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons"' % \
+                    (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
+    else:
+	file3.write(r'Icon: 0,0,000,6,2, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nFuel Remaining: %.2f gallons"' % \
+                    (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,fuel_level))
+    file3.write(file_footerend)
+    file3.close()
 
     # Chance of getting pulled over.
     # 1 to 5 mph over the speed limit.
@@ -775,16 +875,26 @@ while (mins <= sim_time):
             file1.close()
 
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp))).strftime("%H:%M:%S")))
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp+extra_all_time))).strftime("%H:%M:%S")))
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
             file2.write(file_footertext)
             file2.close()
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
             
             time.sleep(cop_slp)
             d = shelve.open(fname)
@@ -819,16 +929,26 @@ while (mins <= sim_time):
             file1.close()
 
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp))).strftime("%H:%M:%S")))
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp+extra_all_time))).strftime("%H:%M:%S")))
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
             file2.write(file_footertext)
             file2.close()
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
             
             time.sleep(cop_slp)
             d = shelve.open(fname)
@@ -862,16 +982,26 @@ while (mins <= sim_time):
             file1.close()
 
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp))).strftime("%H:%M:%S")))
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp+extra_all_time))).strftime("%H:%M:%S")))
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
             file2.write(file_footertext)
             file2.close()
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
             
             time.sleep(cop_slp)
             d = shelve.open(fname)
@@ -904,16 +1034,26 @@ while (mins <= sim_time):
             file1.write(file_footertext)
             file1.close()
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp))).strftime("%H:%M:%S")))
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp+extra_all_time))).strftime("%H:%M:%S")))
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
             file2.write(file_footertext)
             file2.close()
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
             
             time.sleep(cop_slp)
             d = shelve.open(fname)
@@ -947,15 +1087,25 @@ while (mins <= sim_time):
             file1.close()
 
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp))).strftime("%H:%M:%S")))
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp+extra_all_time))).strftime("%H:%M:%S")))
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
             file2.write(file_footertext)
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
             
             time.sleep(cop_slp)
             d = shelve.open(fname)
@@ -989,16 +1139,26 @@ while (mins <= sim_time):
             file1.close()
 
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp))).strftime("%H:%M:%S")))
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp+extra_all_time))).strftime("%H:%M:%S")))
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
             file2.write(file_footertext)
             file2.close()
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
             
             time.sleep(cop_slp)
             d = shelve.open(fname)
@@ -1033,16 +1193,26 @@ while (mins <= sim_time):
             file1.close()
 
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp))).strftime("%H:%M:%S")))
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp+extra_all_time))).strftime("%H:%M:%S")))
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
             file2.write(file_footertext)
             file2.close()
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
             
             time.sleep(cop_slp)
             d = shelve.open(fname)
@@ -1077,16 +1247,26 @@ while (mins <= sim_time):
             file1.close()
 
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp))).strftime("%H:%M:%S")))
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+cop_slp+extra_all_time))).strftime("%H:%M:%S")))
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
             file2.write(file_footertext)
             file2.close()
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nPULLED OVER"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
             
             time.sleep(cop_slp)
             d = shelve.open(fname)
@@ -1104,14 +1284,18 @@ while (mins <= sim_time):
     dirt_road = random.uniform(0.0001,1.0)
     if (cc_turns == 0) and (dirt_road <= dr_chance) and (dr_check == 0):
         print "You've driven onto a dirt road."
-        print "Your top speed will be decreased to %s mph until you change roads." % (int(dr_top_spd),)
+        print "Your top speed will be decreased to %s mph until you change roads or back-track." % (int(dr_top_spd),)
         print ""
         
         d = shelve.open(fname)
         dr_check = 1
+        dr_dist = dist
         dr_direct = direct
+        dr_deg = deg
         d['dr_check'] = dr_check
         d['dr_direct'] = dr_direct
+        d['dr_deg'] = dr_deg
+        d['dr_dist'] = dr_dist
         d.close()
         
         file1 = open("%s%s.php" % (teamfile_location, C_Team_Name,), "w" )
@@ -1124,16 +1308,27 @@ while (mins <= sim_time):
         file1.close()
 
 
-        file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
         file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                   time_step.strftime("%Y-%m-%d"), \
-                                                  (time_step+datetime.timedelta(seconds=(slp_time))).strftime("%H:%M:%S")))
+                                                  (time_step+datetime.timedelta(seconds=(slp_time+extra_all_time))).strftime("%H:%M:%S")))
         file2.write('Object: %s,%s\n' % (lat, lon))     
         file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
         file2.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nON A DIRT ROAD"' % \
                     (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
         file2.write(file_footertext)
         file2.close()
+
+
+        file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file3.write('Object: %s,%s\n' % (lat, lon))     
+        file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+        file3.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nON A DIRT ROAD"' % \
+                    (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
+        file3.write(file_footerend)
+        file3.close()
+
+        
     elif (dr_check == 1):
         file1 = open("%s%s.php" % (teamfile_location, C_Team_Name,), "w" )
         file1.write(file_headertext)
@@ -1145,19 +1340,31 @@ while (mins <= sim_time):
         file1.close()
 
 
-        file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
         file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                   time_step.strftime("%Y-%m-%d"), \
-                                                  (time_step+datetime.timedelta(seconds=(slp_time))).strftime("%H:%M:%S")))
+                                                  (time_step+datetime.timedelta(seconds=(slp_time+extra_all_time))).strftime("%H:%M:%S")))
         file2.write('Object: %s,%s\n' % (lat, lon))     
         file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
         file2.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nON A DIRT ROAD"' % \
                     (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
         file2.write(file_footertext)
         file2.close()
+
+
+        file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file3.write('Object: %s,%s\n' % (lat, lon))     
+        file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+        file3.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nON A DIRT ROAD"' % \
+                    (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
+        file3.write(file_footerend)
+        file3.close()
+
+        
     elif (dr_check == 2):
         d = shelve.open(fname)
         dr_check = 0
+        dr_dist = 0
         d['dr_check'] = dr_check
         d.close()        
 
@@ -1166,9 +1373,8 @@ while (mins <= sim_time):
         d = shelve.open(fname)
         stuck = random.uniform(0.0001,1.0)
         if (stuck < (stuck_chance + aft_dark_inc)):
-            print ""
             print "Your team is stuck in the mud and is attempting to free your vehicle."
-            stuck_slp = random.randint(slp_time/4, slp_time*1.5)
+            stuck_slp = random.randint(int(slp_time/4), slp_time*2)
             d['stuck_slp'] = stuck_slp
             d.close()
 
@@ -1182,16 +1388,26 @@ while (mins <= sim_time):
             file1.close()
 
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time+stuck_slp))).strftime("%H:%M:%S")))
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+stuck_slp+extra_all_time))).strftime("%H:%M:%S")))
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nON A DIRT ROAD\nSTUCK IN THE MUD"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
             file2.write(file_footertext)
             file2.close()
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))     
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nON A DIRT ROAD\nSTUCK IN THE MUD"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
             
             time.sleep(stuck_slp)
             d = shelve.open(fname)
@@ -1226,16 +1442,26 @@ while (mins <= sim_time):
             file1.close()
 
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time))).strftime("%H:%M:%S")))
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+extra_all_time))).strftime("%H:%M:%S")))
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nIN CHASER CONVERGENCE"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
             file2.write(file_footertext)
             file2.close()
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))     
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nIN CHASER CONVERGENCE"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
 
             cc_top_spd = random.randint(15,45)   # speed limit if a team gets stuck in chaser convergence.
             d['cc_top_spd'] = cc_top_spd
@@ -1264,16 +1490,26 @@ while (mins <= sim_time):
         file1.close()
 
 
-        file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
         file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                   time_step.strftime("%Y-%m-%d"), \
-                                                  (time_step+datetime.timedelta(seconds=(slp_time))).strftime("%H:%M:%S")))
+                                                  (time_step+datetime.timedelta(seconds=(slp_time+extra_all_time))).strftime("%H:%M:%S")))
         file2.write('Object: %s,%s\n' % (lat, lon))     
         file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
         file2.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nIN CHASER CONVERGENCE"' % \
                     (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
         file2.write(file_footertext)
         file2.close()
+
+
+        file3 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
+        file3.write('Object: %s,%s\n' % (lat, lon))     
+        file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+        file3.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nIN CHASER CONVERGENCE"' % \
+                    (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
+        file3.write(file_footerend)
+        file3.close()
+
 
         if (cc_turns == 0):           
             print "You are now out of chaser convergence."
@@ -1325,16 +1561,27 @@ while (mins <= sim_time):
         file1.write(file_footertext)
         file1.close()
 
-        file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
         file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                     time_step.strftime("%Y-%m-%d"), \
-                                                    (time_step+datetime.timedelta(seconds=(slp_time+tire_slp))).strftime("%H:%M:%S")))
+                                                    (time_step+datetime.timedelta(seconds=(slp_time+tire_slp+extra_all_time))).strftime("%H:%M:%S")))
         file2.write('Object: %s,%s\n' % (lat, lon))     
         file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
         file2.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nFLAT TIRE"' % \
                     (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
         file2.write(file_footertext)
         file2.close()
+
+
+        file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file3.write('Object: %s,%s\n' % (lat, lon))     
+        file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+        file3.write(r'Icon: 0,0,000,6,10, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nFLAT TIRE"' % \
+                    (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+        file3.write(file_footerend)
+        file3.close()
+
+        
         d.close()
 
         time.sleep(tire_slp)
@@ -1377,16 +1624,25 @@ while (mins <= sim_time):
         file1.close()
 
 
-        file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
         file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                   time_step.strftime("%Y-%m-%d"), \
-                                                  (time_step+datetime.timedelta(seconds=(slp_time))).strftime("%H:%M:%S")))
+                                                  (time_step+datetime.timedelta(seconds=(slp_time+extra_all_time))).strftime("%H:%M:%S")))
         file2.write('Object: %s,%s\n' % (lat, lon))     
         file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
         file2.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nHIT A DEAD END"' % \
                     (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
         file2.write(file_footertext)
         file2.close()
+
+
+        file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file3.write('Object: %s,%s\n' % (lat, lon))     
+        file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+        file3.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nHIT A DEAD END"' % \
+                    (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+        file3.write(file_footerend)
+        file3.close()
         
 
     # Setting up the likelihood of a flooded road hazard
@@ -1418,10 +1674,10 @@ while (mins <= sim_time):
         file1.close()
 
 
-        file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
         file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                   time_step.strftime("%Y-%m-%d"), \
-                                                  (time_step+datetime.timedelta(seconds=(slp_time))).strftime("%H:%M:%S")))
+                                                  (time_step+datetime.timedelta(seconds=(slp_time+extra_all_time))).strftime("%H:%M:%S")))
         file2.write('Object: %s,%s\n' % (lat, lon))     
         file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
         file2.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nHIT A FLOODED ROADWAY"' % \
@@ -1430,8 +1686,17 @@ while (mins <= sim_time):
         file2.close()
 
 
+        file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file3.write('Object: %s,%s\n' % (lat, lon))     
+        file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+        file3.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nHIT A FLOODED ROADWAY"' % \
+                    (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+        file3.write(file_footerend)
+        file3.close()
+
+
     # Checking if team wants to refuel.
-    if (0.00 < fuel_level <= (fuel_cap * 0.15)):
+    if (0.00 < fuel_level <= (fuel_cap * 0.10)):
         print "You have %.2f gallons of gas left." % (fuel_level,)
         refuel = raw_input("Would your team like to refuel?: ")
         print ""
@@ -1452,16 +1717,26 @@ while (mins <= sim_time):
             file1.close()
 
 
-            file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
             file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                       time_step.strftime("%Y-%m-%d"), \
-                                                      (time_step+datetime.timedelta(seconds=(slp_time+refuel_slp))).strftime("%H:%M:%S")))            
+                                                      (time_step+datetime.timedelta(seconds=(slp_time+refuel_slp+extra_all_time))).strftime("%H:%M:%S")))            
             file2.write('Object: %s,%s\n' % (lat, lon))     
             file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
             file2.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nREFUELING"' % \
                         (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
             file2.write(file_footertext)
             file2.close()
+
+
+            file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+            file3.write('Object: %s,%s\n' % (lat, lon))     
+            file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+            file3.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: %s mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nREFUELING"' % \
+                        (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,speed,direct,int_deg,fuel_level))
+            file3.write(file_footerend)
+            file3.close()
+
     
             print "Refueling now."
             print ""    
@@ -1500,16 +1775,25 @@ while (mins <= sim_time):
         file1.close()
 
 
-        file2 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file2 = open("%s%s_moving.php" % (teamfile_location, C_Team_Name,), "a" )
         file2.write('TimeRange: %sT%sZ %sT%sZ\n' % (time_step.strftime("%Y-%m-%d"),time_step.strftime("%H:%M:%S"), \
                                                   time_step.strftime("%Y-%m-%d"), \
-                                                  (time_step+datetime.timedelta(seconds=(slp_time+refuel_slp))).strftime("%H:%M:%S")))        
+                                                  (time_step+datetime.timedelta(seconds=(slp_time+refuel_slp+extra_all_time))).strftime("%H:%M:%S")))        
         file2.write('Object: %s,%s\n' % (lat, lon))     
         file2.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
         file2.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nREFUELING"' % \
                     (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
         file2.write(file_footertext)
         file2.close()
+
+
+        file3 = open("%s%s_all.php" % (teamfile_location, C_Team_Name,), "a" )
+        file3.write('Object: %s,%s\n' % (lat, lon))     
+        file3.write('Icon: 0,0,%3d,2,15,\n' % (int_deg,))
+        file3.write(r'Icon: 0,0,000,6,6, "Team: %s\n%s UTC\nCar type: %s\nSpeed: 0 mph\nHeading: %s (%3d)\nFuel Remaining: %.2f gallons\nREFUELING"' % \
+                    (Team_Name,time_step.strftime("%Y-%m-%d %H:%M:%S"),Car_Type,direct,int_deg,fuel_level))
+        file3.write(file_footerend)
+        file3.close()
 
         print "Refueling now."
         print ""
