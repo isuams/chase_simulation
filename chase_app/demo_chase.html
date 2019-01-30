@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chase Simulation: Chase App</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    <style type="text/css">
+        .dir-button {
+            width: 60px;
+            display: inline-block;
+            float: left;
+            margin: 3px;
+        }
+        div.messages {
+            background: #ddd;
+            border-radius: 5px;
+            overflow-y: scroll;
+            max-height: 200px;
+            padding: 10px;
+        }
+        div.status, div.control, div.messages {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <div class="container">
+            <div class="row justify-content-md-center">
+                <div class="col col-md-6">
+                    <div class="status">
+                        <table class="table table-bordered table-sm">
+                            <tr>
+                                <th scope="row">Location</th>
+                                <td>42.089, -93.768 (5 Mi E Boone, IA)</td>
+                            </tr>
+                            <tr class="table-warning">
+                                <th scope="row">Status</th>
+                                <td>In Chaser Convergence</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Fuel</th>
+                                <td>5 gallons (40%) remaining <button class="btn btn-sm btn-light align-right">Refuel</button></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Balance</th>
+                                <td>$75.00</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Points</th>
+                                <td>15</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="control">
+                        <div class="row">
+                            <div class="col">
+                                <input class="custom-range" type="range" min="0" max="135" id="speedRange" value="45"><br>
+                                Current Speed: <span id="currentSpeed">45</span> mph<br>
+                                Current Max Speed: <span class="text-warning" id="maxSpeed">45 mph</span>
+                            </div>
+                            <div class="col">
+                                <div style="max-width: 200px;" class="row">
+                                    <button class="btn btn-secondary dir-button">NW</button>
+                                    <button class="btn btn-secondary dir-button">N</button>
+                                    <button class="btn btn-primary dir-button">NE</button>
+                                    <button class="btn btn-secondary dir-button">W</button>
+                                    <button class="btn btn-secondary dir-button">Stop</button>
+                                    <button class="btn btn-secondary dir-button">E</button>
+                                    <button class="btn btn-secondary dir-button">SW</button>
+                                    <button class="btn btn-secondary dir-button">W</button>
+                                    <button class="btn btn-secondary dir-button">SE</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="messages">
+                        <p class="messages text-monospace">
+                            0300Z: You are stuck in chaser convergence<br>
+                            0255Z: You are stuck in chaser convergence<br>
+                            0250Z: You are stuck in chaser convergence<br>
+                            0245Z: You are stuck in chaser convergence<br>
+                            0240Z: You are stuck in chaser convergence<br>
+                            0235Z: You are stuck in chaser convergence<br>
+                            0230Z: You are stuck in chaser convergence<br>
+                            0225Z: You are stuck in chaser convergence<br>
+                            0220Z: You are stuck in chaser convergence<br>
+                            0215Z: You are stuck in chaser convergence<br>
+                            0210Z: You are stuck in chaser convergence<br>
+                            0205Z: You are stuck in chaser convergence<br>
+                            0200Z: You are stuck in chaser convergence<br>
+                            0155Z: You are stuck in chaser convergence<br>
+                            0150Z: You are stuck in chaser convergence<br>
+                            0145Z: You are stuck in chaser convergence<br>
+                            0140Z: You are stuck in chaser convergence<br>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+</body>
+</html>
