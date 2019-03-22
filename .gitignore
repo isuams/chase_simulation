@@ -3,3 +3,6 @@
 
 # Don't include the working directory (for cross-system comparisons)
 .working/
+
+# Jupyter
+.ipynb_checkpoints/
