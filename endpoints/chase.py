@@ -44,7 +44,7 @@ try:
     config = Config(master_db_file)
     
     # Establish the list of hazards TODO TODO
-    hazard_list = []
+    hazard_registry = []
     
     # Input Handling
     form = cgi.FieldStorage()
@@ -54,14 +54,14 @@ try:
     refuel = bool(form.getvalue('refuel'))
     
     # Set Up Team
-    team = Team(team_db_dir + team_id + '.db')
+    team = Team(team_db_dir + team_id + '.db', hazards=hazard_registry)
     message_list = []
     
     # Sanitize input values
     if team.cannot_refuel:
         refuel = False
 
-    if refuel or speed <= 0 or team.stopped:
+    if refuel or speed <= 0 or team.stopped or team.fuel_level <= 0:
         speed = 0
         direction = 0
         
@@ -83,11 +83,15 @@ try:
         fuel_amt = min(diff_time.seconds * config.fill_rate,
                        team.vehicle.fuel_cap - team.fuel_level)
         team.fuel_level += fuel_amt
-        team.balance -= fuel_amt * gas_price
+        team.balance -= fuel_amt * config.gas_price
         done_refueling = (team.fuel_level >= team.vehicle.fuel_cap - .01)
     else:
         fuel_amt = distance / team.vehicle.calculate_mpg(speed)
         team.fuel_level -= fuel_amt
+        if team.fuel_level < 0:
+            team.fuel_level = 0
+            message_list.append(datetime.now(tz=pytz.UTC).strftime('%H%MZ') +
+                                ': You are running on fumes! Better call for help.')
         
     # Current hazard/hazard expiry
     if (team.active_hazard is not None and 
@@ -98,7 +102,7 @@ try:
     # Check queue for action items (either instant action or a hazard to queue)
     queued_hazard = None
     if team.has_action_queue_items():
-        for action in team.get_action_queue():
+        for action in team.get_action_queue(hazard_registry):
             if not action.is_hazard:
                 if action.is_adjustment:
                     team.apply_action(action)
@@ -109,7 +113,7 @@ try:
                 
     # If no hazard queued, shuffle in a chance of a random hazard
     if queued_hazard is None:
-        queued_hazard = shuffle_new_hazard(team, diff_time.seconds, hazard_list)
+        queued_hazard = shuffle_new_hazard(team, diff_time.seconds, hazard_registry)
         
     # Apply the queued hazard if it overrides a current hazard (otherwise ignore)
     if team.active_hazard is None or team.active_hazard.overridden_by(queued_hazard):
