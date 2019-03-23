@@ -30,147 +30,100 @@ from dateutil import parser
 import json
 import numpy as np
 from ChaseLib import *  # fake for now
+from ChaseLib.functions import *
 
 
 # Constants
-
-# Critical Files
-master_db_file = 'master.db'
+master_db_file = 'main.db'
 team_db_dir = 'teams/'
 
+# Wrap full process to safely catch errors
+config = team = None
+try:
+    # Establish core config
+    config = Config(master_db_file)
+    
+    # Establish the list of hazards TODO TODO
+    hazard_list = []
+    
+    # Input Handling
+    form = cgi.FieldStorage()
+    team_id = form.getvalue('team_id')
+    speed = float(form.getvalue('speed'))
+    direction = float(form.getvalue('direction'))
+    refuel = bool(form.getvalue('refuel'))
+    
+    # Set Up Team
+    team = Team(team_db_dir + team_id + '.db')
+    message_list = []
+    
+    # Sanitize input values
+    if team.cannot_refuel:
+        refuel = False
 
-# Functions
-# TODO: Move outside of this file
-def lat_lon_diff(distance_miles, angle_degrees):
-    """Calculate difference in lat/lon crudely (but good enough for the plains)."""
-    angle = np.deg2rad(angle_degrees)
-    diff_lat = ((math.cos(angle) * distance_miles) * 0.016740)
-    diff_lon = ((math.sin(angle) * distance_miles) * 0.022180)
-    return diff_lat, diff_lon
+    if refuel or speed <= 0 or team.stopped:
+        speed = 0
+        direction = 0
+        
+    if speed > team.current_max_speed():
+        speed = team.current_max_speed()
+        
+    # Movement Updates
+    current_time = datetime.now(tz=pytz.UTC)
+    diff_time = current_time - team.last_update_time
+    distance = speed * config.speed_factor * diff_time.seconds / 3600
+    diff_lat, diff_lon = lat_lon_diff(distance, direction)
+    team.lat += diff_lat
+    team.lon += diff_lon
+    team.speed = speed
+    team.direction = direction
 
-
-def heading_str_from_angle(angle_degrees):
-    # TODO: text for heading from angle
-    return
-
-
-def money_format(money):
-    # TODO: Make a nice money string from a float
-    return
-
-
-# Input Handling
-
-form = cgi.FieldStorage()
-team_id = form.getvalue('team_id')
-speed = form.getvalue('speed')
-direction = form.getvalue('direction')
-refuel = bool(form.getvalue('refuel'))
-
-# TODO: Core config
-speed_factor = 4.0
-gas_price = 2.25  # dollars per gallon
-
-"""
-TODO: Error Conditions
-
-Error out if
-- {team_id}.db is not found
-- ...
-"""
-
-team = Team(team_db_dir + team_id + '.db')
-past_status = team.get_last_status()
-current_hazard = team.get_current_hazard()
-message_list = []
-
-
-"""
-TODO: Sanitization
-
-If refuel, then set speed = 0 and direction = 0
-If speed <= 0, then set speed = 0 and direction = 0
-If speed > current max speed, then set speed = current max speed
-If direction not parseable to angle (if not number or from metpy.calc.parse_angle), then
-    set to random angle
-"""
-
-# Movement Updates
-
-# Prep
-current_time = datetime.now(tz=pytz.UTC)
-diff_time = current_time - parser.parse(past_status['timestamp'])
-distance = speed * speed_factor * diff_time.seconds / 3600
-diff_lat, diff_lon = lat_lon_diff(distance, direction)
-
-# Position and movement
-team.lat += diff_lat
-team.lon += diff_lon
-team.speed = speed
-team.direction = heading_str_from_angle(direction)
-
-# Gas
-if refuel:
-    fuel_amt = team.vehicle.fuel_cap - team.fuel_level
-    team.fuel_level += fuel_amt
-    team.balance -= fuel_amt * gas_price
-    # TODO: make sure they are stuck for the designated time period
-else:
-    fuel_amt = distance * team.vehicle.calculate_mpg(speed)
-    team.fuel_level -= fuel_amt
-
-# TODO check current_hazard expiry
-
-# Check queue for action items
-if team.has_action_queue_items():
-    hazard_queued = False
-    for action in team.get_action_queue():
-        if not action.is_hazard:
-            if action.is_adjustment:
-                action.apply_to(team)
-            message_list.append(action.message)
-            action.dismiss()
-        elif action.is_hazard and not hazard_queued:
-            current_hazard = action
-            hazard_queued = True
-            action.dismiss()
-        # Note that hazards other than the first are ignored...and they automatically
-        # overwrite any existing hazard.
-
-# Handle hazards
-
-# See if adding a new one!
-if current_hazard is not None:
-    # TODO: roll the dice for new hazard
-    new_hazard = shuffle_new_hazard(team, diff_time)
-
-# TODO: actually handle a current hazard
-
-# Save results and output
-
-if current_hazard is not None:
-    message_list.append(current_hazard.message)
-    team.set_current_hazard(current_hazard)
-team.write_status()
-
-output = {
-    'team_id': team_id,
-    'location': '42.089, -93.768 (5 Mi E Boone, IA)',
-    'status_text': 'In Chaser Convergence',
-    'status_color': 'warning',
-    'fuel_text': '5 gallons (40%) remaining',
-    'fuel_color': None,
-    'can_refuel': False,
-    'balance': money_format(team.balance),
-    'balance_color': None,
-    'points': team.points,
-    'speed': team.speed,
-    'current_max_speed': team.current_max_speed,
-    'direction': team.direction,
-    'can_move': True,
-    'messages': '0300Z: You are still stuck in chaser convergence'
-}  # TODO: real, not this sample
-
-# Return output
-print('Content-type: application/json\r\n')
-print(json.dumps(output))
+    # Gas management
+    if refuel:
+        fuel_amt = min(diff_time.seconds * config.fill_rate,
+                       team.vehicle.fuel_cap - team.fuel_level)
+        team.fuel_level += fuel_amt
+        team.balance -= fuel_amt * gas_price
+        done_refueling = (team.fuel_level >= team.vehicle.fuel_cap - .01)
+    else:
+        fuel_amt = distance / team.vehicle.calculate_mpg(speed)
+        team.fuel_level -= fuel_amt
+        
+    # Current hazard/hazard expiry
+    if (team.active_hazard is not None and 
+        team.active_hazard.expiry_time <= datetime.now(tz=pytz.UTC)):
+            message_list.append(team.active_hazard.generate_expiry_message())
+            team.clear_active_hazard()
+            
+    # Check queue for action items (either instant action or a hazard to queue)
+    queued_hazard = None
+    if team.has_action_queue_items():
+        for action in team.get_action_queue():
+            if not action.is_hazard:
+                if action.is_adjustment:
+                    team.apply_action(action)
+                message_list.append(action.generate_message())
+                team.dismiss_action(action)
+            elif action.is_hazard and queued_hazard is None:
+                queued_hazard = action
+                
+    # If no hazard queued, shuffle in a chance of a random hazard
+    if queued_hazard is None:
+        queued_hazard = shuffle_new_hazard(team, diff_time.seconds, hazard_list)
+        
+    # Apply the queued hazard if it overrides a current hazard (otherwise ignore)
+    if team.active_hazard is None or team.active_hazard.overridden_by(queued_hazard):
+        team.apply_hazard(queued_hazard)  # actually make it take effect
+        message_list.append(queued_hazard.generate_message())
+        team.dismiss_action(queued_hazard)  # in case it was from DB
+    
+    # Prepare for output
+    team.write_status()
+    output = {**team.output_status_dict(), 'messages': message_list}
+except Exception as exc:
+    # Error Handling
+    output = {'error': True, 'error_message': str(exc)}
+finally:
+    # Return output
+    print('Content-type: application/json\r\n')
+    print(json.dumps(output))

@@ -31,6 +31,12 @@ class Config:
     dead_end_chance
     flood_chance
     extra_all_time (extra time to add to _all placefile)
+    
+    New Global Settings:
+    --------------------
+    speed_factor
+    gas_price ($/gallon)
+    fill_rate (gallon/sec)
     """
 
     # Data dictionary for storing config
@@ -89,15 +95,44 @@ class Team:
     """
     API to define:
 
+    cannot_refuel
+    stopped
+    current_max_speed()
+    last_update_time
+    lat
+    lon
+    speed
+    direction
+    fuel_level
+    active_hazard
+    clear_active_hazard()
     has_action_queue_items()
     get_action_queue()
-    get_current_hazard()
-    points
-    speed
-    current_max_speed
-    direction
+    apply_action()
+    dismiss_action()  # safe to actions that don't exist, like random hazards
+    apply_hazard()
+    write_status()
+    output_status_dict()
+    
 
     """
+    output = {
+        'team_id': team_id,
+        'location': '42.089, -93.768 (5 Mi E Boone, IA)',
+        'status_text': 'In Chaser Convergence',
+        'status_color': 'warning',
+        'fuel_text': '5 gallons (40%) remaining',
+        'fuel_color': None,
+        'can_refuel': False,
+        'balance': money_format(team.balance),
+        'balance_color': None,
+        'points': team.points,
+        'speed': team.speed,
+        'current_max_speed': team.current_max_speed,
+        'direction': team.direction,
+        'direction_lock': False,
+        'can_move': True
+    }
 
 
 class Vehicle:
@@ -168,6 +203,12 @@ class Action:
     def apply_to(self, team):
         # TODO: Apply this action to this team
         return
+    
+    """
+    API to define:
+    
+    generate_message()
+    """
 
 
 class Hazard(Action):
@@ -179,3 +220,11 @@ class Hazard(Action):
 
     def __init__(self, data):
         self.data = data
+        
+    """
+    API to define:
+    
+    expiry_time
+    generate_expiry_message()
+    overridden_by()
+    """
