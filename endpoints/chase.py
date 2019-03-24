@@ -26,9 +26,7 @@ What this script does when run:
 # Imports
 import cgi
 from datetime import datetime
-from dateutil import parser
 import json
-import numpy as np
 from ChaseLib import *  # fake for now
 from ChaseLib.functions import *
 
@@ -42,21 +40,21 @@ config = team = None
 try:
     # Establish core config
     config = Config(master_db_file)
-    
+
     # Establish the list of hazards TODO TODO
     hazard_registry = []
-    
+
     # Input Handling
     form = cgi.FieldStorage()
     team_id = form.getvalue('team_id')
     speed = float(form.getvalue('speed'))
     direction = float(form.getvalue('direction'))
     refuel = bool(form.getvalue('refuel'))
-    
+
     # Set Up Team
     team = Team(team_db_dir + team_id + '.db', hazards=hazard_registry)
     message_list = []
-    
+
     # Sanitize input values
     if team.cannot_refuel:
         refuel = False
@@ -64,10 +62,10 @@ try:
     if refuel or speed <= 0 or team.stopped or team.fuel_level <= 0:
         speed = 0
         direction = 0
-        
+
     if speed > team.current_max_speed():
         speed = team.current_max_speed()
-        
+
     # Movement Updates
     current_time = datetime.now(tz=pytz.UTC)
     diff_time = current_time - team.last_update_time
@@ -92,13 +90,13 @@ try:
             team.fuel_level = 0
             message_list.append(datetime.now(tz=pytz.UTC).strftime('%H%MZ') +
                                 ': You are running on fumes! Better call for help.')
-        
+
     # Current hazard/hazard expiry
-    if (team.active_hazard is not None and 
-        team.active_hazard.expiry_time <= datetime.now(tz=pytz.UTC)):
-            message_list.append(team.active_hazard.generate_expiry_message())
-            team.clear_active_hazard()
-            
+    if (team.active_hazard is not None and
+            team.active_hazard.expiry_time <= datetime.now(tz=pytz.UTC)):
+        message_list.append(team.active_hazard.generate_expiry_message())
+        team.clear_active_hazard()
+
     # Check queue for action items (either instant action or a hazard to queue)
     queued_hazard = None
     if team.has_action_queue_items():
@@ -110,17 +108,17 @@ try:
                 team.dismiss_action(action)
             elif action.is_hazard and queued_hazard is None:
                 queued_hazard = action
-                
+
     # If no hazard queued, shuffle in a chance of a random hazard
     if queued_hazard is None:
         queued_hazard = shuffle_new_hazard(team, diff_time.seconds, hazard_registry)
-        
+
     # Apply the queued hazard if it overrides a current hazard (otherwise ignore)
     if team.active_hazard is None or team.active_hazard.overridden_by(queued_hazard):
         team.apply_hazard(queued_hazard)  # actually make it take effect
         message_list.append(queued_hazard.generate_message())
         team.dismiss_action(queued_hazard)  # in case it was from DB
-    
+
     # Prepare for output
     team.write_status()
     output = {**team.output_status_dict(), 'messages': message_list}
