@@ -7,6 +7,7 @@ These are the functions to make the chase applet work.
 """
 
 import pandas as pd
+from math import floor
 from pyproj import Geod
 
 
@@ -22,14 +23,8 @@ def move_lat_lon(lat, lon, distance_miles, angle_degrees):
 
 
 def money_format(money):
-    # TODO: Make a nice money string from a float
-    return money
-
-
-def shuffle_new_hazard(team, seconds, hazards):
-    """Given a time interval, use registered hazards to shuffle a chance of a new hazard."""
-    # TODO Something
-    return None
+    # Make a nice money string from a float
+    return '${:,.2f}'.format(money)
 
 
 def nearest_city(lat, lon, config):
@@ -62,4 +57,12 @@ def nearest_city(lat, lon, config):
     if len(candidate_cities) > 0:
         return sorted(candidate_cities, key=lambda tup: tup[-1])[0]
     else:
-        return ('Middle of Nowhere', None, None, None)
+        return (None,) * 4
+
+
+def direction_angle_to_str(angle):
+    """Convert the given angle to a direction string."""
+    idx = floor((angle + 11.25) % 360 / 22.5)
+    angle_str_list = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW',
+                      'WSW', 'W', 'WNW', 'NW', 'NNW']
+    return angle_str_list[idx]

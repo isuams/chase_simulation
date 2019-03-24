@@ -29,6 +29,7 @@ from datetime import datetime
 import json
 from ChaseLib import *  # fake for now
 from ChaseLib.functions import *
+from ChaseLib.hazards import create_hazard_registry
 
 
 # Constants
@@ -41,8 +42,8 @@ try:
     # Establish core config
     config = Config(master_db_file)
 
-    # Establish the list of hazards TODO TODO
-    hazard_registry = []
+    # Establish the list of hazards
+    hazard_registry = create_hazard_registry(config)
 
     # Input Handling
     form = cgi.FieldStorage()
@@ -52,7 +53,7 @@ try:
     refuel = bool(form.getvalue('refuel'))
 
     # Set Up Team
-    team = Team(team_db_dir + team_id + '.db', hazards=hazard_registry)
+    team = Team(team_db_dir + team_id + '.db', hazards=hazard_registry, config=config)
     message_list = []
 
     # Sanitize input values

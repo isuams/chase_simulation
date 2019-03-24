@@ -9,8 +9,8 @@ These are the base classes to make the chase applet work, regardless of interfac
 import pytz
 from sqlite3 import dbapi2 as sql
 from dateutil import parser
-from datetime import datetime
-from ChaseLib.functions import money_format, nearest_city
+from datetime import datetime, timedelta
+from ChaseLib.functions import direction_angle_to_str, money_format, nearest_city
 
 
 db_time_fmt = '%Y-%m-%dT%H:%M:%S'
@@ -70,53 +70,26 @@ class Config:
     def fill_rate(self):
         return float(self.get_config_value('fill_rate'))
 
+    @property
+    def min_town_distance_search(self):
+        return float(self.get_config_value('min_town_distance_search'))
+
+    @property
+    def min_town_distance_refuel(self):
+        return float(self.get_config_value('min_town_distance_refuel'))
+
+    @property
+    def min_town_population(self):
+        return int(self.get_config_value('min_town_population'))
+
 
 class Team:
-    """...
-
-    Old Details
-    -----------
-    time_now
-    d
-    Team_Name
-    C_Team_Name
-    Car_Type
-    top_speed
-    mpg
-    fuel_cap
-    stuck_chance
-    lat
-    lon
-    speed
-    mins
-    refuel_slp
-    cop_slp
-    stuck_slp
-    tire_slp
-    cc_turns
-    init_time
-    fuel_level
-    time_step
-    direct
-    dr_direct
-    dr_deg
-    dist
-    dr_dist
-    cc_top_spd
-    dr_top_spd
-    aft_dark_inc
-    sun_check
-    dead_check
-    dr_check
-    new_deg
-    old_direct
-
-    """
     status = {}
     active_hazard = None
     vehicle = None
+    config = None
 
-    def __init__(self, path, hazards):
+    def __init__(self, path, hazards, config):
         """Construct underlying sqlite connection, and set initial state."""
         self.con = sql.connect(path)
         self.cur = self.con.cursor()
@@ -128,13 +101,15 @@ class Team:
             self.active_hazard = hazards[self.status['active_hazard']]
             self.active_hazard.expiry_time = parser.parse(self.status['hazard_exp_time'])
 
-        # self.vehicle TODO
+        self.config = config
+        self.vehicle = Vehicle(self.status['vehicle'], config)
 
     @property
     def cannot_refuel(self):
         """Determine if the current team cannot refuel."""
-        # TODO
-        return False
+        # Get distance to nearst city
+        _, _, distance, _ = nearest_city(self.lat, self.lon, self.config)
+        return (distance is None or distance > self.config.min_town_distance_refuel)
 
     @property
     def stopped(self):
@@ -288,16 +263,42 @@ class Team:
                                    self.active_hazard.direction_lock)
         speed_lock = False or (self.active_hazard is not None and
                                self.active_hazard.speed_lock)
+
+        city, st, dist, angle = nearest_city(self.lat, self.lon, self.config)
+        if city is None:
+            location_str = '{lat:.3f}, {lat:.3f} (Middle of Nowhere)'.format(lat=self.lat,
+                                                                             lon=self.lon)
+        else:
+            location_str = ('{lat:.3f}, {lat:.3f} ({dist:.0f} Mi {ang} {city},{st})'.format(
+                            lat=self.lat, lon=self.lon, dist=dist,
+                            ang=direction_angle_to_str(angle), city=city, st=st))
+
+        fuel_percent = self.fuel_level / self.vehicle.fuel_cap * 100
+        if fuel_percent > 25:
+            fuel_color = 'success'
+        elif fuel_percent > 5:
+            fuel_color = 'warning'
+        else:
+            fuel_color = 'danger'
+
+        if self.balance > 100:
+            balance_color = 'success'
+        elif self.balance > 0:
+            balance_color = 'warning'
+        else:
+            balance_color = 'danger'
+
         output = {
             'team_id': self.status['team_id'],
-            'location': '42.089, -93.768 (5 Mi E Boone, IA)',  # TODO
+            'location': location_str,
             'status_text': self.status['status_text'],
             'status_color': color,
-            'fuel_text': '5 gallons (40%) remaining',  # TODO
-            'fuel_color': None,  # TODO
+            'fuel_text': ('{level:.1f} gallons ({percent:.0f}%) remaining'.format(
+                          level=self.fuel_level, percent=fuel_percent)),
+            'fuel_color': fuel_color,
             'can_refuel': not self.cannot_refuel,
             'balance': money_format(self.balance),
-            'balance_color': None,  # TODO
+            'balance_color': balance_color,
             'points': self.status['points'],
             'speed': self.speed,
             'current_max_speed': self.current_max_speed(),
@@ -310,9 +311,10 @@ class Team:
 
 class Vehicle:
     """
-    ...TODO...
+    Manage the vehicles!
     """
-    # Configuration Variables
+
+    # Configuration Variables (Default)
     vehicle_type = None
     print_name = '(None)'
     top_speed = 135  # mph
@@ -321,12 +323,11 @@ class Vehicle:
     mpg = 38  # mpg
     fuel_cap = 13  # gallons
     stuck_probability = 0.01  # chance per current minute
-    cost = 0.0  # dollars
 
-    def __init__(self, cursor, vehicle_type):
-        self._cursor = cursor
+    def __init__(self, vehicle_type, config):
+        self._cursor = config.cur
         data = self._query(('SELECT print_name, top_speed, top_speed_on_dirt, '
-                            'efficient_speed, mpg, fuel_cap, stuck_probability, cost FROM'
+                            'efficient_speed, mpg, fuel_cap, stuck_probability FROM'
                             'vehicles WHERE vehicle_type = ?'), [vehicle_type])
         if len(data) != 1:
             raise ValueError('Vehicle type' + str(vehicle_type) + ' not found.')
@@ -339,7 +340,6 @@ class Vehicle:
             self.mpg = float(data[0][4])
             self.fuel_cap = float(data[0][5])
             self.stuck_probability = float(data[0][6])
-            self.cost = float(data[0][7])
 
     def _query(self, *args):
         # Run a DB query on the DB cursor given
@@ -360,52 +360,79 @@ class Vehicle:
 
 class Action:
     """
-    ...TODO...
+    Actions! Basic changes or messages as itself, and base interface for hazards.
     """
+    action_id = None
+    action_type = None
+    action_field = None
+    action_amount = None
     is_adjustment = False
     is_hazard = False
     message = ''
 
-    def __init__(self, data):
-        self._data = data
+    def __init__(self, action_tuple):
+        # Initialize given action_tuple=(id, message, type, amount, _)
+        self.action_id = action_tuple[0]
+        self.message = action_tuple[1]
+        if '_' in action_tuple[2]:
+            self.action_type, self.action_field = action_tuple[2].split('_', 1)
+        else:
+            self.action_type = action_tuple[2]
+        self.action_amount = action_tuple[3]
 
-    def dismiss():
-        # TODO: Dismiss this action in the db
-        return
+        if self.action_type in ['set', 'change']:
+            self.is_adjustment = True
 
-    def apply_to(self, team):
-        # TODO: Apply this action to this team
-        return
+    def generate_message(self):
+        """Generate the message."""
+        return datetime.now(tz=pytz.UTC).strftime('%H%MZ') + ': ' + self.message
 
-    """
-    API to define:
-
-    __init__(action_tuple=(id, message, type, amount, _))
-
-    generate_message()
-    action_id
-    alter_status()
-    """
+    def alter_status(self, status):
+        """Alter status if needed by action_type."""
+        if self.is_adjustment:
+            # only adjust if this action is an adjustment
+            if self.action_type == 'set':
+                status[self.action_field] = self.action_amount
+            elif self.action_type == 'change':
+                status[self.action_field] = (float(status[self.action_field]) +
+                                             float(self.action_amount))
+        return status
 
 
 class Hazard(Action):
     """
-    ...
+    Hazards! Real stuff is going down here.
     """
     is_adjustment = False
     is_hazard = True
+    action_type = 'hazard'
+    expiry_time = None
+    overridden_by_list = []
+    message_end = None
+    speed_limit = None
+    direction_lock = False
+    speed_lock = False
 
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, hazard_type, alter_status, message, message_end=None, duration_min=None,
+                 overridden_by_list=[], speed_limit=None, direction_lock=False,
+                 speed_lock=False):
+        self.type = hazard_type
+        self.alter_status = alter_status
+        self.message = message
+        self.message_end = message_end
+        self.expiry_time = datetime.now(tz=pytz.UTC) + timedelta(minutes=duration_min)
+        self.overridden_by_list = overridden_by_list
+        self.speed_limit = speed_limit
+        self.direction_lock = direction_lock
+        self.speed_lock = speed_lock
 
-    """
-    API to define:
+    def generate_expiry_message(self):
+        """Generate the expiry message."""
+        if self.message_end is not None:
+            return datetime.now(tz=pytz.UTC).strftime('%H%MZ') + ': ' + self.message_end
+        else:
+            return ''
 
-    expiry_time
-    generate_expiry_message()
-    overridden_by()
-    speed_limit
-    type
-    direction_lock  # bool
-    speed_lock  # bool
-    """
+    def overridden_by(self, other_hazard):
+        """Check if this hazard is overridden by the other hazard type."""
+        return (other_hazard.type in self.overridden_by_list)
