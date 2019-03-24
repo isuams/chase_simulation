@@ -46,6 +46,7 @@ class Config:
     min_town_distance_search
     min_town_distance_refuel
     min_town_population
+    speed_limit
     """
 
     def __init__(self, path):
@@ -63,24 +64,22 @@ class Config:
         return int(self.get_config_value('speed_factor'))
 
     @property
-    def gas_price(self):
-        return float(self.get_config_value('gas_price'))
-
-    @property
-    def fill_rate(self):
-        return float(self.get_config_value('fill_rate'))
-
-    @property
-    def min_town_distance_search(self):
-        return float(self.get_config_value('min_town_distance_search'))
-
-    @property
-    def min_town_distance_refuel(self):
-        return float(self.get_config_value('min_town_distance_refuel'))
-
-    @property
     def min_town_population(self):
         return int(self.get_config_value('min_town_population'))
+
+    def __getattr__(self, name):
+        # Default to float transform
+        return float(self.get_config_value(name))
+
+    def hazard_config(self, name):
+        # Get the hazard config
+        self.cur.execute('SELECT hazard_value FROM hazard_config WHERE hazard_setting = ?',
+                         [name])
+        return self.cur.fetchall()[0][0]
+
+    @property
+    def start_time(self):
+        return parser.parse(self.get_config_value('start_time'))
 
 
 class Team:
@@ -194,6 +193,7 @@ class Team:
     def clear_active_hazard(self):
         """Clear the active hazard."""
         self.active_hazard = None
+        self.status['active_hazard'] = ''
         self.status['status_color'] = 'green'
         self.status['status_text'] = 'Chase On'
 
@@ -413,12 +413,13 @@ class Hazard(Action):
     direction_lock = False
     speed_lock = False
 
-    def __init__(self, hazard_type, alter_status, message, message_end=None, duration_min=None,
-                 overridden_by_list=[], speed_limit=None, direction_lock=False,
-                 speed_lock=False):
-        self.type = hazard_type
-        self.alter_status = alter_status
-        self.message = message
+    def __init__(self, hazard_type, alter_status, probability, message, message_end=None,
+                 duration_min=None, overridden_by_list=['end_chase'], speed_limit=None,
+                 direction_lock=False, speed_lock=False):
+        self.type = hazard_type  # string
+        self.alter_status = alter_status  # function(status)
+        self.probability = probability  # function(status)
+        self.message = message  # string
         self.message_end = message_end
         self.expiry_time = datetime.now(tz=pytz.UTC) + timedelta(minutes=duration_min)
         self.overridden_by_list = overridden_by_list
