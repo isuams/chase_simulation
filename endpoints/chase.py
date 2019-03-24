@@ -70,9 +70,7 @@ try:
     current_time = datetime.now(tz=pytz.UTC)
     diff_time = current_time - team.last_update_time
     distance = speed * config.speed_factor * diff_time.seconds / 3600
-    diff_lat, diff_lon = lat_lon_diff(distance, direction)
-    team.lat += diff_lat
-    team.lon += diff_lon
+    team.lat, team.lon = move_lat_lon(team.lat, team.lon, distance, direction)
     team.speed = speed
     team.direction = direction
 

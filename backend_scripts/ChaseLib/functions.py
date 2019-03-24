@@ -6,15 +6,19 @@ Helper Functions for Chase Applet
 These are the functions to make the chase applet work.
 """
 
-import numpy as np
+import pandas as pd
+from pyproj import Geod
 
 
-def lat_lon_diff(distance_miles, angle_degrees):
-    """Calculate difference in lat/lon crudely (but good enough for the plains)."""
-    angle = np.deg2rad(angle_degrees)
-    diff_lat = ((np.cos(angle) * distance_miles) * 0.016740)
-    diff_lon = ((np.sin(angle) * distance_miles) * 0.022180)
-    return diff_lat, diff_lon
+city_csv = 'uscitiesv1.4.csv'  # from https://simplemaps.com/data/us-cities
+g = Geod('sphere')  # set up Geod
+
+
+def move_lat_lon(lat, lon, distance_miles, angle_degrees):
+    """Calculate displacement to new point."""
+    distance_m = distance_miles * 1609.344  # convert
+    new_lon, new_lat, _ = g.fwd(lon, lat, angle_degrees, distance_m)
+    return new_lat, new_lon
 
 
 def money_format(money):
@@ -26,3 +30,36 @@ def shuffle_new_hazard(team, seconds, hazards):
     """Given a time interval, use registered hazards to shuffle a chance of a new hazard."""
     # TODO Something
     return None
+
+
+def nearest_city(lat, lon, config):
+    """Find the nearest City, ST, Distance, Direction from this point."""
+
+    # Get city data
+    data = pd.read_csv(city_csv)
+
+    # Get search bounds
+    corner_lat, corner_lon = move_lat_lon(lat, lon, config.min_town_distance_search, 45)
+    diff_lat, diff_lon = corner_lat - lat, corner_lon - lon
+
+    # Get cities within box
+    subset = data[(data['population'] > config.min_town_population) &
+                  (lat - diff_lat <= data['lat']) & (data['lat'] <= lat + diff_lon) &
+                  (lon - diff_lon <= data['lng']) & (data['lng'] <= lon + diff_lon)]
+
+    candidate_cities = []
+    for _, row in subset.iterrows():
+        forward_az, _, distance_m = g.inv(lon, lat, row['lng'], row['lat'])
+        distance_miles = distance_m / 1609.344  # convert
+        angle_degrees = forward_az % 360.
+        candidate_cities.append((
+            row['city_ascii'],
+            row['state_id'],
+            distance_miles,
+            angle_degrees))
+
+    # Return closest city (min distance)
+    if len(candidate_cities) > 0:
+        return sorted(candidate_cities, key=lambda tup: tup[-1])[0]
+    else:
+        return ('Middle of Nowhere', None, None, None)

@@ -10,7 +10,7 @@ import pytz
 from sqlite3 import dbapi2 as sql
 from dateutil import parser
 from datetime import datetime
-from ChaseLib.functions import money_format
+from ChaseLib.functions import money_format, nearest_city
 
 
 db_time_fmt = '%Y-%m-%dT%H:%M:%S'
@@ -43,6 +43,9 @@ class Config:
     speed_factor
     gas_price ($/gallon)
     fill_rate (gallon/sec)
+    min_town_distance_search
+    min_town_distance_refuel
+    min_town_population
     """
 
     def __init__(self, path):
