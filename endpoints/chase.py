@@ -27,9 +27,9 @@ What this script does when run:
 import cgi
 from datetime import datetime
 import json
-from ChaseLib import *  # fake for now
+from ChaseLib.App import *
 from ChaseLib.functions import *
-from ChaseLib.hazards import create_hazard_registry
+from ChaseLib.hazards import create_hazard_registry, shuffle_new_hazard
 
 
 # Constants
