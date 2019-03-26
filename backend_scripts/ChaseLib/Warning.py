@@ -74,7 +74,7 @@ def process_warning_text(warning, timings):
     # Update the '622 PM CDT SUN MAY 22 2016' string
     match = re.search(r'(?P<time>[0-9]+) (?P<apm>PM|AM) (?P<zone>CDT|MDT) ' +
                       r'(?P<weekday>[A-Z]{3}) (?P<month>[A-Z]{3}) ' +
-                      r'(?P<day>[0-2][1-9]|3[0-1]) (?P<year>20[0-9]{2})',
+                      r'(?P<day>[1-9]|[0-2][1-9]|3[0-1]) (?P<year>20[0-9]{2})',
                       warning)
     if match:
         if match.group('zone') == 'CDT':
